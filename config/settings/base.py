@@ -74,6 +74,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "rest_auth",
     "rest_auth.registration",
+    "drf_yasg",
 ]
 
 LOCAL_APPS = [
