@@ -26,7 +26,7 @@ certificatesResolvers:
 http:
   routers:
     web-router:
-      rule: "Host(`persei.risotech.vn`) || Host(`www.persei.risotech.vn`)"
+      rule: "Host(`persei.risotech.vn`)"
       
       entryPoints:
         - web
@@ -36,7 +36,7 @@ http:
       service: django
 
     web-secure-router:
-      rule: "Host(`persei.risotech.vn`) || Host(`www.persei.risotech.vn`)"
+      rule: "Host(`persei.risotech.vn`)"
       
       entryPoints:
         - web-secure
