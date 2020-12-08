@@ -1,0 +1,69 @@
+version: '3'
+
+volumes:
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
+
+services:
+  wab_django: &wab_django
+    build:
+      context: .
+      dockerfile: ./compose/local/Dockerfile
+    image: wab_local_django
+    container_name: django
+    depends_on:
+      - wab_postgres
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - "8000:8000"
+    command: /start
+
+  wab_postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: wab_production_postgres
+    container_name: postgres
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+      - local_postgres_data_backups:/backups:z
+    env_file:
+      - ./.envs/.local/.postgres
+
+  wab_redis:
+    image: redis:5.0
+    container_name: redis
+
+  wab_celeryworker:
+    <<: *wab_django
+    image: wab_local_celeryworker
+    container_name: celeryworker
+    depends_on:
+      - wab_redis
+      - wab_postgres
+      
+    ports: []
+    command: /start-celeryworker
+
+  wab_celerybeat:
+    <<: *wab_django
+    image: wab_local_celerybeat
+    container_name: celerybeat
+    depends_on:
+      - wab_redis
+      - wab_postgres
+      
+    ports: []
+    command: /start-celerybeat
+
+  wab_flower:
+    <<: *wab_django
+    image: wab_local_flower
+    container_name: flower
+    ports:
+      - "5555:5555"
+    command: /start-flower

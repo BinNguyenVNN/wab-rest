@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=wab_postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=wab
+POSTGRES_USER=lYgklkhMDiRcGrsrxZwSbEGQwsdIFdLk
+POSTGRES_PASSWORD=zpVpZYYINRPfV6YH90JMZyBEcUHOypNpXpd5fsY9VCPM9MYKUpqz74ItwKNbmwr3
