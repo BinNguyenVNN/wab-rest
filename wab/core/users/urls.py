@@ -1,10 +1,17 @@
+from django.conf import settings
 from django.urls import path
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from wab.core.users.views import user_detail_view, user_redirect_view, user_update_view
+from wab.core.users.api.views import UserViewSet
+
+if settings.DEBUG:
+    router = DefaultRouter()
+else:
+    router = SimpleRouter()
+
+router.register("", UserViewSet)
 
 app_name = "users"
 urlpatterns = [
-    path("~redirect/", view=user_redirect_view, name="redirect"),
-    path("~update/", view=user_update_view, name="update"),
-    path("<str:username>/", view=user_detail_view, name="detail"),
-]
+
+] + router.urls
