@@ -343,34 +343,6 @@ JWT_AUTH = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_ORIGIN_WHITELIST = [
-  "http://localhost:4200",
-  "http://localhost:8080",
-  "http://127.0.0.1:9000",
-  "http://18.141.141.246",
-  "https://localhost",
-  "https://localhost:4200",
-  "https://localhost:8080",
-]
-CORS_ALLOW_METHODS = [
-  'DELETE',
-  'GET',
-  'OPTIONS',
-  'PATCH',
-  'POST',
-  'PUT',
-]
-CORS_ALLOW_HEADERS = [
-  'accept',
-  'accept-encoding',
-  'authorization',
-  'content-type',
-  'dnt',
-  'origin',
-  'user-agent',
-  'x-csrftoken',
-  'x-requested-with',
-]
 CORS_URLS_REGEX = r"^/api/.*$"
 # Combine DRF + JWT + ALLAUTH
 REST_USE_JWT = True

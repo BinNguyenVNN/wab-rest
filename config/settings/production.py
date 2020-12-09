@@ -154,4 +154,33 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_WHITELIST = [
+  "http://localhost:4200",
+  "http://localhost:8080",
+  "http://127.0.0.1:9000",
+  "http://18.141.141.246",
+  "https://localhost",
+  "https://localhost:4200",
+  "https://localhost:8080",
+]
+CORS_ALLOW_METHODS = [
+  'DELETE',
+  'GET',
+  'OPTIONS',
+  'PATCH',
+  'POST',
+  'PUT',
+]
+CORS_ALLOW_HEADERS = [
+  'accept',
+  'accept-encoding',
+  'authorization',
+  'content-type',
+  'dnt',
+  'origin',
+  'user-agent',
+  'x-csrftoken',
+  'x-requested-with',
+]
