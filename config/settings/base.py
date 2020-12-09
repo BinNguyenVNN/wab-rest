@@ -343,7 +343,7 @@ JWT_AUTH = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
+# CORS_URLS_REGEX = r"^/api/.*$"
 # Combine DRF + JWT + ALLAUTH
 REST_USE_JWT = True
 # Your stuff...
