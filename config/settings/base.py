@@ -229,7 +229,7 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = [("""Bin Nguyen""", "support@example.com")]
+ADMINS = [("""Bin Nguyen""", "hello@persei.io")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 
@@ -343,7 +343,7 @@ JWT_AUTH = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
+# CORS_URLS_REGEX = r"^/api/.*$"
 # Combine DRF + JWT + ALLAUTH
 REST_USE_JWT = True
 # Your stuff...
