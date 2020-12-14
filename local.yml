@@ -3,6 +3,11 @@ version: '3'
 volumes:
   local_postgres_data: {}
   local_postgres_data_backups: {}
+  pgadmin: {}
+
+networks:
+  postgres:
+    driver: bridge
 
 services:
   wab_django: &wab_django
@@ -59,7 +64,7 @@ services:
     depends_on:
       - wab_redis
       - wab_postgres
-      
+
     ports: []
     command: /start-celeryworker
 
@@ -70,7 +75,7 @@ services:
     depends_on:
       - wab_redis
       - wab_postgres
-      
+
     ports: []
     command: /start-celerybeat
 

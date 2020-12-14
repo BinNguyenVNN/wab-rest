@@ -79,6 +79,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "wab.core.users.apps.UsersConfig",
+    "wab.core.custom_column.apps.CustomColumnTypeConfig",
+    "wab.core.db_provider.apps.DbProviderConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
