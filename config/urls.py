@@ -30,7 +30,8 @@ urlpatterns = [
     # DRF auth
     path("oauth/", include("rest_auth.urls")),
     path("oauth/registration/", include("rest_auth.registration.urls")),
-    path("oauth/registration/account-confirm-email/(?P<key>[-:\w]+)/", ConfirmEmailView.as_view(), name="account_confirm_email"),
+    # path("oauth/registration/account-confirm-email/(?P<key>[-:\w]+)/", ConfirmEmailView.as_view(), name="account_confirm_email"),
+    path('verify-email/', ConfirmEmailView.as_view(), name='rest_verify_email'),
     # Core
     path("core/", include("wab.core.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
