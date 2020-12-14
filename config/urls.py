@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views import defaults as default_views
-from dj_rest_auth.registration.views import VerifyEmailView
+from allauth.account.views import ConfirmEmailView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
@@ -30,7 +30,7 @@ urlpatterns = [
     # DRF auth
     path("oauth/", include("rest_auth.urls")),
     path("oauth/registration/", include("rest_auth.registration.urls")),
-    path("oauth/account-confirm-email/", VerifyEmailView.as_view(), name="account_email_verification_sent")
+    path("oauth/registration/account-confirm-email/(?P<key>[-:\w]+)/", ConfirmEmailView.as_view(), name="account_confirm_email"),
     # Core
     path("core/", include("wab.core.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
