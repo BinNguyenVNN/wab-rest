@@ -20,18 +20,21 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-urlpatterns = [
+urlpatterns = [ 
+    # DRF auth
+    path("password-reset/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$",
+        TemplateView.as_view(template_name="password_reset_confirm.html"),
+        name='password_reset_confirm'),
+    path("oauth/", include("rest_auth.urls")),
+    path("oauth/registration/", include("rest_auth.registration.urls")),
+    path("account-confirm-email/<str:key>/", ConfirmEmailView.as_view(), name="account_confirm_email"),
+    # BASE
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # AllAuth
     path("accounts/", include("allauth.urls")),
-    # DRF auth
-    path("oauth/", include("rest_auth.urls")),
-    path("oauth/registration/", include("rest_auth.registration.urls")),
-    path("account-confirm-email/<str:key>/", ConfirmEmailView.as_view(), name="account_confirm_email"),
-#     path('verify-email/', ConfirmEmailView.as_view(), name='rest_verify_email'),
     # Core
     path("core/", include("wab.core.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
