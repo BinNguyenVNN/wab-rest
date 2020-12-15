@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views import defaults as default_views
+from django.views.generic import TemplateView
 from allauth.account.views import ConfirmEmailView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
