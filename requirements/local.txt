@@ -37,3 +37,4 @@ pytest-django==4.1.0  # https://github.com/pytest-dev/pytest-django
 
 # Mongo DB
 pymongo==3.11.2
+dnspython==2.0.0
