@@ -19,7 +19,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
-      - "8000:8000"
+      - "8001:8000"
     command: /start
 
   wab_postgres:
@@ -34,20 +34,6 @@ services:
     env_file:
       - ./.envs/.local/.postgres
 
-  pgadmin:
-    container_name: wab_production_pgadmin
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-    volumes:
-       - pgadmin:/root/.pgadmin
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    networks:
-      - postgres
-    restart: unless-stopped
-
   wab_redis:
     image: redis:5.0
     container_name: wab_redis
@@ -59,7 +45,7 @@ services:
     depends_on:
       - wab_redis
       - wab_postgres
-      
+
     ports: []
     command: /start-celeryworker
 
@@ -70,7 +56,7 @@ services:
     depends_on:
       - wab_redis
       - wab_postgres
-      
+
     ports: []
     command: /start-celerybeat
 
@@ -79,5 +65,5 @@ services:
     image: wab_local_flower
     container_name: wab_flower
     ports:
-      - "5555:5555"
+      - "5556:5555"
     command: /start-flower
