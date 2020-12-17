@@ -28,6 +28,7 @@ urlpatterns = [
                   # Django Admin, use {% url 'admin:index' %}
                   path(settings.ADMIN_URL, admin.site.urls),
                   # AllAuth
+                  path('rest-auth/', include('dj_rest_auth.urls')),
                   # path("accounts/", include("allauth.urls")),
                   # DRF auth
                   # path("oauth/", include("rest_auth.urls")),
