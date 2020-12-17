@@ -68,7 +68,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
-    "dj_rest_auth",
+    # "dj_rest_auth",
     # "allauth",
     # "allauth.account",
     # "allauth.socialaccount",
@@ -80,14 +80,14 @@ THIRD_PARTY_APPS = [
     # "rest_auth.registration",
     "drf_yasg",
     "anymail",
-    "dj_rest_auth.registration",
+    # "dj_rest_auth.registration",
 ]
 
 LOCAL_APPS = [
     "wab.core.users.apps.UsersConfig",
     "wab.core.custom_column.apps.CustomColumnTypeConfig",
     "wab.core.db_provider.apps.DbProviderConfig",
-    "wab.core.emails.apps.EmailsConfig",
+    # "wab.core.emails.apps.EmailsConfig",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

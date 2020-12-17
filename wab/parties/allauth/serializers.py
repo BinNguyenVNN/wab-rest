@@ -1,3 +1,5 @@
+from abc import ABC
+
 from django.contrib.auth.models import update_last_login
 from django.db.models import Q
 from rest_framework import serializers
@@ -57,3 +59,13 @@ class LoginUserSerializer(serializers.Serializer):
             'phone': user.email,
             'token': jwt_token
         }
+
+
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+    email = serializers.CharField(max_length=255)

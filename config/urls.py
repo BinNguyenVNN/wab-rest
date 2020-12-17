@@ -8,7 +8,8 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 from wab.parties.allauth.views import AccountRegisterView, AccountLoginView, ConfirmEmailView, \
-    confirm_email_done, confirm_email_expired, RequestConfirmEmailView, request_email_done
+    confirm_email_done, confirm_email_expired, RequestConfirmEmailView, request_email_done, ResetPasswordRequestView, \
+    password_rest_complete, SetPasswordView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -28,7 +29,7 @@ urlpatterns = [
                   # Django Admin, use {% url 'admin:index' %}
                   path(settings.ADMIN_URL, admin.site.urls),
                   # AllAuth
-                  path('rest-auth/', include('dj_rest_auth.urls')),
+                  # path('rest-auth/', include('dj_rest_auth.urls')),
                   # path("accounts/", include("allauth.urls")),
                   # DRF auth
                   # path("oauth/", include("rest_auth.urls")),
@@ -47,6 +48,12 @@ urlpatterns = [
                        name="confirm_email_request"),
                   path("oauth/registration/request/done/", request_email_done,
                        name="request_email_done"),
+                  path("accounts/reset-password/", ResetPasswordRequestView.as_view(),
+                       name="request_reset_password_view"),
+                  path("accounts/reset-password/confirm/<str:key>/", SetPasswordView.as_view(),
+                       name="password_reset_confirm"),
+                  path("accounts/reset-password/done/", password_rest_complete,
+                       name="password_rest_done"),
                   # Core
                   path("core/", include("wab.core.urls")),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
