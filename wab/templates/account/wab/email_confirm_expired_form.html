@@ -1,0 +1,30 @@
+{% extends "account/wab/base_form.html" %}
+{% load i18n %}
+{% load static %}
+{% block content %}
+  <div class="login-page container-landpage">
+    <div class="wrapper fadeInDown">
+      <div id="formContent_reset">
+        <div class="fadeIn first logo">
+          <h2>Web Application Base</h2>
+        </div>
+        <div class="form-login">
+          <form action="{{ link }}" method="post">
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-md-12">
+                <p>{% trans "The confirm link was invalid, possibly because it has already been used. Please request a new request." %}</p>
+              </div>
+              </div>
+            <div class="form-group row">
+              <div class="col-md-12">
+                <button class="button-login" type="submit">Request
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

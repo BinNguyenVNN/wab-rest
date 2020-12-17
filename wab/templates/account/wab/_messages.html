@@ -1,0 +1,22 @@
+{% if messages %}
+  {% for message in messages %}
+    <div style="padding-left: 25px;
+    margin-bottom: 10px;
+    color: red;">{{ message|urlize }}</div>
+  {% endfor %}
+{% endif %}
+
+{% if form.errors %}
+  {% for error in form.non_field_errors %}
+    <div style="padding-left: 25px;
+    margin-bottom: 10px;
+    color: red;">{{ error }}</div>
+  {% endfor %}
+  {% for field in form %}
+    {% for error in field.errors %}
+      <div style="padding-left: 25px;
+    margin-bottom: 10px;
+    color: red;">{{ error }}</div>
+    {% endfor %}
+  {% endfor %}
+{% endif %}

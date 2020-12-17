@@ -68,3 +68,21 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
+# INSTALLED_APPS += ["anymail"]  # noqa F405
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL", default="Web Application Base <hello@persei.io>"
+)
+# # https://docs.djangoproject.com/en/dev/ref/settings/#server-email
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+ANYMAIL = {
+    "SENDGRID_API_KEY": "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",
+    "SENDGRID_GENERATE_MESSAGE_ID": False,
+    "SENDGRID_MERGE_FIELD_FORMAT": "-{}-",
+    "SENDGRID_API_URL": "https://api.sendgrid.com/v3/",
+}
+
+EMAIL_SUBJECT_PREFIX = '[Web Application Base]'
+WAB_FE = 'http://localhost:4200/'
+WAB_API = 'http://localhost:8000/'
+PASSWORD_RESET_TIMEOUT_DAYS = 1

@@ -3,10 +3,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views import defaults as default_views
-from allauth.account.views import ConfirmEmailView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+
+from wab.parties.allauth.views import AccountRegisterView, AccountLoginView, ConfirmEmailView, \
+    confirm_email_done, confirm_email_expired, RequestConfirmEmailView, request_email_done, ResetPasswordRequestView, \
+    password_rest_complete, SetPasswordView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -21,21 +24,39 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # OATH
-    # path('password-reset/confirm/<str:uidb64>/<str:token>/',
-    #     TemplateView.as_view(template_name="password_reset_confirm.html"),
-    #     name='password_reset_confirm'),
-    path('rest-auth/', include('dj_rest_auth.urls')),
-    path('rest-auth/registration/', include('dj_rest_auth.registration.urls')),
-    # BASE
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    # Django Admin, use {% url 'admin:index' %}
-    path(settings.ADMIN_URL, admin.site.urls),
-    # AllAuth
-    path("accounts/", include("allauth.urls")),
-    # Core
-    path("core/", include("wab.core.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+                  path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+                  path('redoc', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+                  # Django Admin, use {% url 'admin:index' %}
+                  path(settings.ADMIN_URL, admin.site.urls),
+                  # AllAuth
+                  # path('rest-auth/', include('dj_rest_auth.urls')),
+                  # path("accounts/", include("allauth.urls")),
+                  # DRF auth
+                  # path("oauth/", include("rest_auth.urls")),
+                  # path("oauth/registration/", include("rest_auth.registration.urls")),
+                  path("oauth/login/", AccountLoginView.as_view(), name="login_view"),
+                  path("oauth/registration/", AccountRegisterView.as_view(), name="create_view"),
+                  # path("oauth/registration/confirm-email/", confirm_view,
+                  #      name="confirm_view"),
+                  path("oauth/registration/confirm-email/<str:key>/", ConfirmEmailView.as_view(),
+                       name="confirm_email_view"),
+                  path("oauth/registration/confirm/done/", confirm_email_done,
+                       name="confirm_email_done"),
+                  path("oauth/registration/confirm/expired/", confirm_email_expired,
+                       name="confirm_email_expired"),
+                  path("oauth/registration/confirm/request/", RequestConfirmEmailView.as_view(),
+                       name="confirm_email_request"),
+                  path("oauth/registration/request/done/", request_email_done,
+                       name="request_email_done"),
+                  path("accounts/reset-password/", ResetPasswordRequestView.as_view(),
+                       name="request_reset_password_view"),
+                  path("accounts/reset-password/confirm/<str:key>/", SetPasswordView.as_view(),
+                       name="password_reset_confirm"),
+                  path("accounts/reset-password/done/", password_rest_complete,
+                       name="password_rest_done"),
+                  # Core
+                  path("core/", include("wab.core.urls")),
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit

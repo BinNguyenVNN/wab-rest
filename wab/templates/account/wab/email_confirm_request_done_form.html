@@ -1,0 +1,26 @@
+{% extends "account/wab/base_form.html" %}
+{% load i18n %}
+{% load static %}
+{% block content %}
+  <div class="login-page container-landpage">
+    <div class="wrapper fadeInDown">
+      <div id="formContent_reset">
+        <div class="fadeIn first logo">
+          <h2>Web Application Base</h2>
+        </div>
+        <div class="form-login">
+          <form action="{{ link }}" method="post">
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-md-12">
+                <p>{% trans "Send mail success. Please check mail inbox." %}</p>
+
+                <p>{% trans "Thanks!." %}</p>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

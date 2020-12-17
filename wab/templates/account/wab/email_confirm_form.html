@@ -1,0 +1,31 @@
+{% extends "account/wab/base_form.html" %}
+{% load i18n %}
+{% load static %}
+{% block content %}
+    <div class="login-page container-landpage">
+        <div class="wrapper fadeInDown">
+            <div id="formContent_reset">
+                <div class="fadeIn first logo">
+                    <h2>Web Application Base</h2>
+                </div>
+                <div class="form-login">
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="title">Confirm E-mail Address</div>
+                                <p class="txt-inline">Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an e-mail address for user {{ username }}.</p>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-12">
+                                <button class="button-login" type="submit">Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
