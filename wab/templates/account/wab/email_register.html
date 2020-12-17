@@ -1,0 +1,17 @@
+{% extends 'account/wab/base_template.html' %}
+{% load i18n %}
+{% block content %}
+  {% block head_title %}{% trans "Confirm E-mail Address" %}{% endblock %}
+
+  <h1>{% trans "Confirm E-mail Address" %}</h1>
+
+  <p>You're receiving this e-mail because user <span style="font-weight: bold;">{{ username }} </span> has given your e-mail address to register an account on
+    {{ fe_url }}.</p>
+
+  <p>To confirm this is correct, go to <a href="{{ activate_url }}">{{ activate_url }}</a></p>
+
+  <p>Thank you for using Web Application Base!</p>
+  <p>{{ fe_url }}</p>
+
+{% endblock content %}
+

@@ -1,0 +1,28 @@
+{% extends "account/wab/base_form.html" %}
+{% load i18n %}
+{% load static %}
+{% block content %}
+  <div class="login-page container-landpage">
+    <div class="wrapper fadeInDown">
+      <div id="formContent_reset">
+        <div class="fadeIn first logo">
+          <h2>Web Application Base</h2>
+        </div>
+        <div class="form-login">
+            {% csrf_token %}
+            <div class="form-group row">
+              <div class="col-md-12">
+                <p>You have confirmed !.</p>
+              </div>
+            </div>
+            <div class="form-group row">
+              <div class="col-md-12">
+                <button class="button-login" type="button" onclick="redirect_login('{{ url_dashboard }}')">Login
+                </button>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

@@ -157,4 +157,6 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-CORS_ORIGIN_ALLOW_ALL = True
+WAB_FE = 'http://localhost:4200/'
+WAB_API = 'https://persei.risotech.vn/'
+PASSWORD_RESET_TIMEOUT_DAYS = 1

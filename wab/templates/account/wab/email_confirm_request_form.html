@@ -1,0 +1,36 @@
+{% extends "account/wab/base_form.html" %}
+{% load i18n %}
+{% load static %}
+{% block content %}
+  <div class="login-page container-landpage">
+    <div class="wrapper fadeInDown">
+      <div id="formContent_reset">
+        <div class="fadeIn first logo">
+          <h2>Web Application Base</h2>
+        </div>
+        <div class="form-login">
+          <form action="" method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-lg-12">
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" class="form-control" id="id_email" name="email"
+                         placeholder="Input email" required autofocus>
+                  {% include "account/wab/_messages.html" %}
+                </div>
+              </div>
+
+            </div>
+            <div class="form-group row">
+              <div class="col-md-12">
+                <button class="button-login" type="submit">Send
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

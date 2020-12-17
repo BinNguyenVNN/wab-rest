@@ -9,3 +9,10 @@ DATABASE_LIST = (
 )
 
 MONGO_SRV_CONNECTION, MONGO_CONNECTION = ('mongodb+srv', 'mongodb')
+
+GET, POST, PUT, DELETE = (
+    'get',
+    'post',
+    'put',
+    'delete'
+)
