@@ -41,24 +41,26 @@ class LoginUserSerializer(serializers.Serializer):
         password = data.get("password", None)
         email = data.get("email", None)
 
-        user = User.objects.filter((Q(email=email) | Q(username=email)), Q(is_active=True)).first()
-        if not user.is_active:
-            raise serializers.ValidationError('A user is not verify.')
-
-        user = authenticate(username=user.username, password=password)
-        if user is None:
+        user = User.objects.filter((Q(email=email) | Q(username=email))).first()
+        if user:
+            if not user.is_active:
+                raise serializers.ValidationError('A user is not verify.')
+            user = authenticate(username=user.username, password=password)
+            if user is None:
+                raise serializers.ValidationError('A user with this username and password is not found.')
+            try:
+                payload = JWT_PAYLOAD_HANDLER(user)
+                jwt_token = JWT_ENCODE_HANDLER(payload)
+                update_last_login(None, user)
+            except User.DoesNotExist:
+                raise serializers.ValidationError('User with given email and password does not exists')
+            return {
+                'username': user.username,
+                'phone': user.email,
+                'token': jwt_token
+            }
+        else:
             raise serializers.ValidationError('A user with this username and password is not found.')
-        try:
-            payload = JWT_PAYLOAD_HANDLER(user)
-            jwt_token = JWT_ENCODE_HANDLER(payload)
-            update_last_login(None, user)
-        except User.DoesNotExist:
-            raise serializers.ValidationError('User with given email and password does not exists')
-        return {
-            'username': user.username,
-            'phone': user.email,
-            'token': jwt_token
-        }
 
 
 class ResetPasswordRequestSerializer(serializers.Serializer):
