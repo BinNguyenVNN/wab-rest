@@ -11,6 +11,32 @@ ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+)
+CORS_ALLOW_HEADERS = (
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'enctype',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'set-cookie',
+    'x-wabapp-alert',
+    'x-wabapp-error',
+    'x-wabapp-params',
+    'X-wabapp-total-count'
+    '*'
+)
+
 # DATABASES
 # ------------------------------------------------------------------------------
 DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405

@@ -41,6 +41,25 @@ def paging(data, total_count, method='get', entity_name=''):
     return Response(data=data, status=status.HTTP_200_OK, headers=headers)
 
 
+def paging_data(data, total_count, method='get', entity_name=''):
+    msg = 'wab.' + entity_name + '.updated'
+    if method == 'put':
+        msg = 'wab.' + entity_name + '.updated'
+    elif method == 'post':
+        msg = 'wab.' + entity_name + '.created'
+    elif method == 'delete':
+        msg = 'wab.' + entity_name + '.deleted'
+    if method == 'get':
+        headers = {
+            'X-wabapp-total-count': total_count
+        }
+    else:
+        headers = {
+            'X-wabapp-alert': msg,
+            'X-wabapp-total-count': total_count
+        }
+    return Response(data=data, status=status.HTTP_200_OK, headers=headers)
+
 def not_found(data, message_code=None, message_system=None):
     activate(settings.LANGUAGE_CODE)
     if message_code is not None:
