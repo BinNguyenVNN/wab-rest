@@ -1,14 +1,12 @@
-from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from wab.core.custom_column.api.serializers import CustomColumnTypeSerializer, ValidationTypeSerializer, \
     ValidationRegexSerializer, ListColumnValidationSerializer, ColumnValidationSerializer
 from wab.core.custom_column.models import CustomColumnType, ValidationType, ValidationRegex, ColumnValidation
-from wab.utils import token_authentication
+from wab.utils import token_authentication, responses, constant
 
 
 class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin,
@@ -49,9 +47,9 @@ class ColumnValidationListView(ListAPIView):
         if custom_column_id:
             validations = ColumnValidation.objects.filter(custom_column_type=custom_column_id)
             serializer = ListColumnValidationSerializer(validations, many=True)
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
+            return responses.ok(data=serializer.data, method=constant.GET, entity_name='column_validation')
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND, data=None)
+            return responses.not_found(data=None, message_code='CUSTOM_COLUMN_NOT_FOUND')
 
 
 class ColumnValidationCreateView(CreateAPIView):
@@ -67,9 +65,9 @@ class ColumnValidationCreateView(CreateAPIView):
             serializer = ColumnValidationSerializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(status=status.HTTP_200_OK, data=serializer.data)
+            return responses.ok(data=serializer.data, method=constant.POST, entity_name='column_validation')
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND, data=None)
+            return responses.not_found(data=None, message_code='CUSTOM_COLUMN_NOT_FOUND')
 
 
 class ColumnValidationUpdateView(UpdateAPIView):
@@ -85,6 +83,6 @@ class ColumnValidationUpdateView(UpdateAPIView):
             serializer = ColumnValidationSerializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(status=status.HTTP_200_OK, data=serializer.data)
+                return responses.ok(data=serializer.data, method=constant.PUT, entity_name='column_validation')
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND, data=None)
+            return responses.not_found(data=None, message_code='CUSTOM_COLUMN_NOT_FOUND')
