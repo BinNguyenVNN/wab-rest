@@ -1,8 +1,18 @@
 import urllib.parse
-
+import pymongo
 from pymongo import MongoClient
-
+import datetime
+import bson.objectid
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
+
+
+def json_mongo_handler(x):
+    if isinstance(x, datetime.datetime):
+        return x.isoformat()
+    elif isinstance(x, bson.objectid.ObjectId):
+        return str(x)
+    else:
+        raise TypeError(x)
 
 
 class Singleton(type):
@@ -48,24 +58,30 @@ class MongoDBManager(object):
             self.databases[database] = database
         return db
 
+    def connection_mongo_by_provider(self, provider_connection=None):
+        return self.connection_mongo(host=provider_connection.host,
+                                     port=provider_connection.port,
+                                     username=provider_connection.username,
+                                     password=provider_connection.password,
+                                     database=provider_connection.database,
+                                     ssl=provider_connection.ssl)
+
     def get_all_collections(self, db):
         collections = db.list_collection_names()
         return collections
 
-    def get_all_documents(self, collection):
-        documents = []
-        cursor = collection.find({})
-        for document in cursor:
-            documents.append(document)
-        return documents
+    def get_all_documents(self, db, collection, column_sort, page, page_size, sort=pymongo.DESCENDING):
+        if column_sort:
+            documents = db[collection].find({}).sort(column_sort, sort).skip((page - 1) * page_size).limit(page_size)
+        else:
+            documents = db[collection].find({}).skip((page - 1) * page_size).limit(page_size)
+        count = documents.count()
+        return documents, count
 
-    def get_one_document(self, collection):
-        cursor = collection.find({})
+    def get_all_keys(self, db, collection):
+        cursor = db[collection].find({})
         for document in cursor:
-            return document
-
-    def get_all_keys(self, document):
-        return document.keys()
+            return document.keys()
 
     def create_new_collection(self, db, collection_name):
         collection = db[collection_name]
