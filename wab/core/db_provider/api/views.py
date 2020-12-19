@@ -4,7 +4,7 @@ from bson.json_util import dumps
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
@@ -117,7 +117,7 @@ class DBConnectionListColumnView(ListAPIView):
 
 
 class DBConnectionListDataView(ListAPIView):
-    authentication_classes = [ ]
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
 
@@ -141,7 +141,7 @@ class DBConnectionListDataView(ListAPIView):
                                                                               sort=sort, page=page, page_size=page_size)
                         data = list(documents)
                         result = json.loads(dumps(data))
-                        return responses.ok(data=result, method=constant.POST,
+                        return responses.paging_data(data=result, total_count=count,method=constant.POST,
                                             entity_name='db_provider_connection')
                     except Exception as err:
                         return responses.bad_request(data=err, message_code='BD_ERROR')
