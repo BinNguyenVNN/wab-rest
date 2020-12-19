@@ -1,17 +1,18 @@
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from wab.core.custom_column.api.serializers import CustomColumnTypeSerializer, ValidationTypeSerializer, \
     ValidationRegexSerializer, ListColumnValidationSerializer, ColumnValidationSerializer
 from wab.core.custom_column.models import CustomColumnType, ValidationType, ValidationRegex, ColumnValidation
+from wab.utils import token_authentication
 
 
-class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericViewSet):
+class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin,
+                              UpdateModelMixin, GenericViewSet):
     serializer_class = CustomColumnTypeSerializer
     queryset = CustomColumnType.objects.all()
     lookup_field = "id"
@@ -39,8 +40,8 @@ class ValidationRegexViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixi
 
 
 class ColumnValidationListView(ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    authentication_class = JSONWebTokenAuthentication
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    permission_classes = [AllowAny, ]
     serializer_class = ListColumnValidationSerializer
 
     def get(self, request, *args, **kwargs):
@@ -54,8 +55,8 @@ class ColumnValidationListView(ListAPIView):
 
 
 class ColumnValidationCreateView(CreateAPIView):
-    permission_classes = (IsAuthenticated,)
-    authentication_class = JSONWebTokenAuthentication
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    permission_classes = [AllowAny, ]
     serializer_class = ColumnValidationSerializer
 
     def post(self, request, *args, **kwargs):
@@ -72,8 +73,8 @@ class ColumnValidationCreateView(CreateAPIView):
 
 
 class ColumnValidationUpdateView(UpdateAPIView):
-    permission_classes = (IsAuthenticated,)
-    authentication_class = JSONWebTokenAuthentication
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    permission_classes = [AllowAny, ]
     serializer_class = ColumnValidationSerializer
 
     def put(self, request, *args, **kwargs):
