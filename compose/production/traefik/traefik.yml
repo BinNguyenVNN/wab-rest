@@ -13,6 +13,9 @@ entryPoints:
   flower:
     address: ":5555"
 
+  postgres:
+    address: ":5432"
+
 certificatesResolvers:
   letsencrypt:
     # https://docs.traefik.io/master/https/acme/#lets-encrypt
@@ -27,7 +30,7 @@ http:
   routers:
     web-router:
       rule: "Host(`persei.risotech.vn`)"
-      
+
       entryPoints:
         - web
       middlewares:
@@ -37,7 +40,7 @@ http:
 
     web-secure-router:
       rule: "Host(`persei.risotech.vn`)"
-      
+
       entryPoints:
         - web-secure
       middlewares:
@@ -52,6 +55,15 @@ http:
       entryPoints:
         - flower
       service: flower
+      tls:
+        # https://docs.traefik.io/master/routing/routers/#certresolver
+        certResolver: letsencrypt
+
+    postgres-router:
+      rule: "Host(`persei.risotech.vn`)"
+      entryPoints:
+        - postgres
+      service: postgres
       tls:
         # https://docs.traefik.io/master/routing/routers/#certresolver
         certResolver: letsencrypt
