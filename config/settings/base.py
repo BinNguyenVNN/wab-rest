@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -347,22 +348,20 @@ JWT_AUTH = {
     # "rest_framework_jwt.utils.jwt_response_payload_handler",
 
     # "JWT_SECRET_KEY": settings.SECRET_KEY,
-    # "JWT_GET_USER_SECRET_KEY": None,
-    # "JWT_PUBLIC_KEY": None,
-    # "JWT_PRIVATE_KEY": None,
-    # "JWT_ALGORITHM": "HS256",
-    # "JWT_VERIFY": True,
-    # "JWT_VERIFY_EXPIRATION": True,
-    # "JWT_LEEWAY": 0,
-    # "JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=300),
-    # "JWT_AUDIENCE": None,
-    # "JWT_ISSUER": None,
-
-    # "JWT_ALLOW_REFRESH": False,
-    # "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=7),
-
+    "JWT_GET_USER_SECRET_KEY": None,
+    "JWT_PUBLIC_KEY": None,
+    "JWT_PRIVATE_KEY": None,
+    "JWT_ALGORITHM": "HS256",
+    "JWT_VERIFY": True,
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_LEEWAY": 0,
+    "JWT_EXPIRATION_DELTA": timedelta(days=30),
+    "JWT_AUDIENCE": None,
+    "JWT_ISSUER": None,
+    "JWT_ALLOW_REFRESH": False,
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=7),
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
-    # "JWT_AUTH_COOKIE": None,
+    "JWT_AUTH_COOKIE": None,
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
