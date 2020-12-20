@@ -99,6 +99,7 @@ class OPERATOR(Enum):
 
 
 class SqlFunctionConditionItems(BaseModel):
+    table_name = models.CharField(null=True, blank=True, max_length=255)
     field_name = models.CharField(null=True, blank=True, max_length=255)
 
     operator = models.CharField(
@@ -111,7 +112,7 @@ class SqlFunctionConditionItems(BaseModel):
     relation = models.CharField(
         max_length=32,
         choices=[x.value for x in RELATION],
-        default=RELATION.get_value('relation_and'),
+        default=None,
     )
 
     sql_function_condition = models.ForeignKey(SqlFunctionCondition, on_delete=models.CASCADE, null=True, blank=True)
