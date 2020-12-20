@@ -60,6 +60,7 @@ def paging_data(data, total_count, method='get', entity_name=''):
         }
     return Response(data=data, status=status.HTTP_200_OK, headers=headers)
 
+
 def not_found(data, message_code=None, message_system=None):
     activate(settings.LANGUAGE_CODE)
     if message_code is not None:

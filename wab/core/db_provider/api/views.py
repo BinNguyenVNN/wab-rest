@@ -4,7 +4,6 @@ from bson.json_util import dumps
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
-from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
@@ -15,6 +14,7 @@ from wab.utils.db_manager import MongoDBManager
 
 
 class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DbProviderSerializer
     queryset = DbProvider.objects.all()
     lookup_field = "id"
@@ -25,6 +25,7 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
 
 class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                   GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DBProviderConnectionSerializer
     queryset = DBProviderConnection.objects.all()
     lookup_field = "id"
@@ -35,7 +36,6 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
 
 class DBConnectionCreateView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     queryset = DbProvider.objects.all()
     serializer_class = DBProviderConnectionSerializer
 
@@ -63,8 +63,7 @@ class DBConnectionCreateView(CreateAPIView):
 
 
 class DBConnectionListTableView(ListAPIView):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
+    authentication_classes = (token_authentication.JWTAuthenticationBackend, )
     queryset = DBProviderConnection.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -92,7 +91,6 @@ class DBConnectionListTableView(ListAPIView):
 
 class DBConnectionListColumnView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -118,7 +116,6 @@ class DBConnectionListColumnView(ListAPIView):
 
 class DBConnectionListDataView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
 
     def get(self, request, *args, **kwargs):
