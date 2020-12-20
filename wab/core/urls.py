@@ -4,4 +4,5 @@ urlpatterns = [
     path("users/", include("wab.core.users.urls")),
     path("", include("wab.core.custom_column.urls")),
     path("db-provider/", include("wab.core.db_provider.urls")),
+    path("sql-function/", include("wab.core.sql_function.urls")),
 ]

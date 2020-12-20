@@ -8,7 +8,6 @@ import environ
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', x)
 # wab/
 APPS_DIR = ROOT_DIR / "wab"
 env = environ.Env()
@@ -22,6 +21,7 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
+IS_LOCAL_DEV = False
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -43,9 +43,20 @@ LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 # DATABASES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
-DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
-
+if IS_LOCAL_DEV is False:
+    DATABASES = {"default": env.db("DATABASE_URL")}
+    DATABASES["default"]["ATOMIC_REQUESTS"] = True
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'wab',
+            'USER': 'postgres',
+            'PASSWORD': '123456',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 # URLS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
@@ -87,6 +98,7 @@ LOCAL_APPS = [
     "wab.core.users.apps.UsersConfig",
     "wab.core.custom_column.apps.CustomColumnTypeConfig",
     "wab.core.db_provider.apps.DbProviderConfig",
+    "wab.core.sql_function.apps.SqlFunctionConfig",
     # "wab.core.emails.apps.EmailsConfig",
     # Your stuff: custom apps go here
 ]
@@ -271,37 +283,38 @@ LOGGING = {
 if USE_TZ:
     # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-timezone
     CELERY_TIMEZONE = TIME_ZONE
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
-CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-accept_content
-CELERY_ACCEPT_CONTENT = ["json"]
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-task_serializer
-CELERY_TASK_SERIALIZER = "json"
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_serializer
-CELERY_RESULT_SERIALIZER = "json"
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-time-limit
-# TODO: set to whatever value is adequate in your circumstances
-CELERY_TASK_TIME_LIMIT = 5 * 60
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-soft-time-limit
-# TODO: set to whatever value is adequate in your circumstances
-CELERY_TASK_SOFT_TIME_LIMIT = 60
-# http://docs.celeryproject.org/en/latest/userguide/configuration.html#beat-scheduler
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+if IS_LOCAL_DEV is False:
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url
+    CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
+    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-accept_content
+    CELERY_ACCEPT_CONTENT = ["json"]
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-task_serializer
+    CELERY_TASK_SERIALIZER = "json"
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_serializer
+    CELERY_RESULT_SERIALIZER = "json"
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-time-limit
+    # TODO: set to whatever value is adequate in your circumstances
+    CELERY_TASK_TIME_LIMIT = 5 * 60
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-soft-time-limit
+    # TODO: set to whatever value is adequate in your circumstances
+    CELERY_TASK_SOFT_TIME_LIMIT = 60
+    # http://docs.celeryproject.org/en/latest/userguide/configuration.html#beat-scheduler
+    CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # django-allauth
 # ------------------------------------------------------------------------------
-ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
+# ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_AUTHENTICATION_METHOD = "username"
+# ACCOUNT_AUTHENTICATION_METHOD = "username"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_REQUIRED = True
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_ADAPTER = "wab.parties.allauth.adapters.AccountAdapter"
+# ACCOUNT_ADAPTER = "wab.parties.allauth.adapters.AccountAdapter"
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
-SOCIALACCOUNT_ADAPTER = "wab.parties.allauth.adapters.SocialAccountAdapter"
+# SOCIALACCOUNT_ADAPTER = "wab.parties.allauth.adapters.SocialAccountAdapter"
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
@@ -348,7 +361,7 @@ JWT_AUTH = {
     # "JWT_ALLOW_REFRESH": False,
     # "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=7),
 
-    # "JWT_AUTH_HEADER_PREFIX": "JWT",
+    "JWT_AUTH_HEADER_PREFIX": "Bearer",
     # "JWT_AUTH_COOKIE": None,
 }
 

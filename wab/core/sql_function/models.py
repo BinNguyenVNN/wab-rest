@@ -38,8 +38,7 @@ class SqlFunctionMerge(BaseModel):
 
     merge_type = models.CharField(
         max_length=32,
-        choices=[x.value for x in MERGE_TYPE],
-        default=MERGE_TYPE.get_value('inner_join'),
+        choices=[x.value for x in MERGE_TYPE], null=True, blank=True
     )
 
     def __str__(self):
@@ -99,6 +98,7 @@ class OPERATOR(Enum):
 
 
 class SqlFunctionConditionItems(BaseModel):
+    table_name = models.CharField(null=True, blank=True, max_length=255)
     field_name = models.CharField(null=True, blank=True, max_length=255)
 
     operator = models.CharField(
