@@ -94,48 +94,46 @@ class SqlFunctionUpdateView(UpdateAPIView):
         data = request.data
         name = data.get("name")
         connection = data.get("connection")
+        sql_function_order_by_id = data.get("sql_function_order_by_id")
         order_by_name = data.get("order_by_name")
         sql_function_merges = data.get("sql_function_merges")
+        sql_function_condition_id = data.get("sql_function_condition_id")
         sql_function_condition_items = data.get("sql_function_condition_items")
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Update SqlFunction
-                sql_function = SqlFunction.objects.update(
-                    id=sql_function_id,
-                    name=name,
-                    connection=DBProviderConnection.objects.get(id=connection)
+                sql_function = SqlFunction.objects.get(
+                    id=sql_function_id
                 )
-                serializer_sql_function = self.get_serializer(sql_function)
-                # Update SqlFunctionOrderBy
-                SqlFunctionOrderBy.objects.update(
-                    order_by_name=order_by_name,
-                    sql_function=sql_function
-                )
-                # Update SqlFunctionMerge
-                for sql_function_merge in sql_function_merges:
-                    SqlFunctionMerge.objects.update(
-                        table_name=sql_function_merge.get("table_name"),
-                        merge_type=sql_function_merge.get("merge_type"),
-                        sql_function=sql_function
-                    )
+                sql_function.name = name
+                sql_function.connection = DBProviderConnection.objects.get(id=connection)
+                sql_function.save()
 
-                # Update SqlFunctionCondition
-                sql_function_condition = SqlFunctionCondition.objects.update(
-                    sql_function=sql_function
-                )
+                serializer_sql_function = self.get_serializer(sql_function)
+
+                # Update SqlFunctionOrderBy
+                sql_function_order_by = SqlFunctionOrderBy.objects.get(id=sql_function_order_by_id)
+                sql_function_order_by.order_by_name = order_by_name
+                sql_function_order_by.save()
+
+                # Update SqlFunctionMerge
+                for item in sql_function_merges:
+                    sql_function_merge = SqlFunctionMerge.objects.get(id=item.get("sql_function_merge_id"))
+                    sql_function_merge.table_name = item.get("table_name")
+                    sql_function_merge.merge_type = item.get("merge_type")
+                    sql_function_merge.save()
 
                 # Update SqlFunctionConditionItems
-                for sql_function_condition_item in sql_function_condition_items:
-                    SqlFunctionConditionItems.objects.update(
-                        table_name=sql_function_condition_item.get("table_name"),
-                        field_name=sql_function_condition_item.get("field_name"),
-                        sql_function_condition=sql_function_condition,
-                        value=sql_function_condition_item.get("value"),
-                        operator=sql_function_condition_item.get("operator"),
-                        relation=sql_function_condition_item.get("relation")
-                    )
-
+                for item in sql_function_condition_items:
+                    sql_function_condition_item = SqlFunctionConditionItems.objects.get(
+                        id=item.get("sql_function_condition_item_id"))
+                    sql_function_condition_item.table_name = item.get("table_name")
+                    sql_function_condition_item.field_name = item.get("field_name")
+                    sql_function_condition_item.value = item.get("value")
+                    sql_function_condition_item.operator = item.get("operator")
+                    sql_function_condition_item.relation = item.get("relation")
+                    sql_function_condition_item.save()
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
                 return responses.bad_request(data=None, message_code='UPDATE_SQL_FUNCTION_HAS_ERROR',
