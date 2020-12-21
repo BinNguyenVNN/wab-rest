@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from wab.core.db_provider.models import DBProviderConnection
 from wab.core.sql_function.api.serializers import SqlFunctionSerializer
 from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionCondition, \
     SqlFunctionConditionItems
@@ -30,6 +31,8 @@ class SqlFunctionCreateView(CreateAPIView):
     @transaction.atomic()
     def post(self, request, *args, **kwargs):
         data = request.data
+        name = data.get("name")
+        connection = data.get("connection")
         order_by_name = data.get("order_by_name")
         sql_function_merges = data.get("sql_function_merges")
         sql_function_condition_items = data.get("sql_function_condition_items")
@@ -37,9 +40,11 @@ class SqlFunctionCreateView(CreateAPIView):
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Create SqlFunction
-                data_sql_function = serializer_sql_function.save()
-                sql_function = SqlFunction.objects.get(id=data_sql_function.id)
-
+                sql_function = SqlFunction.objects.create(
+                    name=name,
+                    connection=DBProviderConnection.objects.get(id=connection)
+                )
+                serializer_sql_function = self.get_serializer(sql_function)
                 # Create SqlFunctionOrderBy
                 SqlFunctionOrderBy.objects.create(
                     order_by_name=order_by_name,
@@ -71,7 +76,8 @@ class SqlFunctionCreateView(CreateAPIView):
 
                 return responses.ok(data=serializer_sql_function.data, method=constant.POST, entity_name='sql-function')
             except Exception as err:
-                return responses.bad_request(data=None, message_code='CREATE_SQL_FUNCTION_HAS_ERROR',
+                return responses.bad_request(data=None,
+                                             message_code='CREATE_SQL_FUNCTION_HAS_ERROR',
                                              message_system=err)
         else:
             return responses.bad_request(data=None, message_code='CREATE_SQL_FUNCTION_INVALID')
@@ -86,6 +92,8 @@ class SqlFunctionUpdateView(UpdateAPIView):
     def put(self, request, *args, **kwargs):
         sql_function_id = kwargs.get("pk")
         data = request.data
+        name = data.get("name")
+        connection = data.get("connection")
         order_by_name = data.get("order_by_name")
         sql_function_merges = data.get("sql_function_merges")
         sql_function_condition_items = data.get("sql_function_condition_items")
@@ -93,10 +101,12 @@ class SqlFunctionUpdateView(UpdateAPIView):
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Update SqlFunction
-                sql_function = SqlFunction.objects.get(id=sql_function_id)
-                serializer_sql_function = self.get_serializer(data=sql_function)
-                data_sql_function = serializer_sql_function.save()
-
+                sql_function = SqlFunction.objects.update(
+                    id=sql_function_id,
+                    name=name,
+                    connection=DBProviderConnection.objects.get(id=connection)
+                )
+                serializer_sql_function = self.get_serializer(sql_function)
                 # Update SqlFunctionOrderBy
                 SqlFunctionOrderBy.objects.update(
                     order_by_name=order_by_name,
@@ -120,7 +130,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
                     SqlFunctionConditionItems.objects.update(
                         table_name=sql_function_condition_item.get("table_name"),
                         field_name=sql_function_condition_item.get("field_name"),
-                        sql_function_condition=sql_function,
+                        sql_function_condition=sql_function_condition,
                         value=sql_function_condition_item.get("value"),
                         operator=sql_function_condition_item.get("operator"),
                         relation=sql_function_condition_item.get("relation")
