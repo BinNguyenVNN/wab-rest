@@ -80,6 +80,7 @@ class SqlFunctionCreateView(CreateAPIView):
 class SqlFunctionUpdateView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
+    serializer_class = SqlFunctionSerializer
 
     @transaction.atomic()
     def put(self, request, *args, **kwargs):
