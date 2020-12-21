@@ -149,7 +149,7 @@ class MongoDBManager(object):
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
                     if condition.operator == OPERATOR.get_value('type_equal'):
                         item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                    elif condition.operator == OPERATOR.get_value('type_in'):
                         item = {"data." + condition.field_name:  {"$in": [condition.value]}}
                     else:
                         item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
@@ -157,7 +157,7 @@ class MongoDBManager(object):
                 else:
                     if condition.operator == OPERATOR.get_value('type_equal'):
                         item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                    elif condition.operator == OPERATOR.get_value('type_in'):
                         item = {"data." + condition.field_name:  {"$in": [condition.value]}}
                     else:
                         item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
