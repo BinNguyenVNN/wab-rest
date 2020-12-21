@@ -89,6 +89,10 @@ class MongoDBManager(object):
         collection.insert({field_name: field_value})
         return collection
 
+    def insert_data_collection(self, db, collection_name, list_data):
+        collection = db[collection_name]
+        collection.insert(list_data)
+
     @staticmethod
     def union(db, table_1, field_1, table_2, field_2, condition_items):
         pipeline = [

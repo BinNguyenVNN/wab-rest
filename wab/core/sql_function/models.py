@@ -38,7 +38,10 @@ class SqlFunctionMerge(BaseModel):
 
     merge_type = models.CharField(
         max_length=32,
-        choices=[x.value for x in MERGE_TYPE], null=True, blank=True
+        choices=[x.value for x in MERGE_TYPE],
+        default=MERGE_TYPE.get_value('inner_join'),
+        null=True,
+        blank=True
     )
 
     def __str__(self):
@@ -69,7 +72,7 @@ class SqlFunctionCondition(BaseModel):
     sql_function = models.ForeignKey(SqlFunction, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return self.sql_function
+        return self.sql_function.name
 
     def save(self, *args, **kwargs):
         return super(BaseModel, self).save(*args, **kwargs)
@@ -105,13 +108,17 @@ class SqlFunctionConditionItems(BaseModel):
         max_length=32,
         choices=[x.value for x in OPERATOR],
         default=OPERATOR.get_value('type_equal'),
+        null=True,
+        blank=True
     )
     value = models.CharField(null=True, blank=True, max_length=255)
 
     relation = models.CharField(
         max_length=32,
         choices=[x.value for x in RELATION],
-        default=RELATION.get_value('relation_and'),
+        default=None,
+        null=True,
+        blank=True
     )
 
     sql_function_condition = models.ForeignKey(SqlFunctionCondition, on_delete=models.CASCADE, null=True, blank=True)
