@@ -262,3 +262,73 @@ class SqlViewTest(ListAPIView):
                 data = list(c)
                 result = json.loads(dumps(data))
                 return responses.ok(data=result, method=constant.GET, entity_name='sql_function')
+
+
+class SqlUnionViewTest(ListAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    queryset = DBProviderConnection.objects.all()
+
+    def get(self, request):
+        provider_connection = self.queryset.get(id=1)
+        provider = provider_connection.provider
+        if provider:
+            if provider.name == MONGO:
+                mongo_db_manager = MongoDBManager()
+                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                collection = db["order_items"]
+
+                pipeline = [
+                    {"$limit": 1},  # Reduce the result set to a single document.
+                    {"$project": {"_id": 1}},  # Strip all fields except the Id.
+                    {"$project": {"_id": 0}},  # Strip the id. The document is now empty.
+                    {"$lookup": {
+                        "from": "order_items",
+                        "pipeline": [
+                            {"$match": {
+                                # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
+                                # "order_id": "a548910a1c6147796b98fdf73dbeba33"
+                                "price": "810"
+                            }
+                            },
+                            {"$project": {
+                                "_id": 0, "result": "$price"
+                            }}
+                        ],
+                        "as": "collection1"
+                    }},
+                    {"$lookup": {
+                        "from": "order_reviews",
+                        "pipeline": [
+                            {"$match": {
+                                # "order_id": "a548910a1c6147796b98fdf73dbeba33",
+                                "review_score": "1"
+                            }
+                            },
+                            {"$project": {
+                                "_id": 0, "result": "$review_score"
+                            }}
+                        ],
+
+                        "as": "collection2"
+                    }},
+                    {"$project": {
+                        "Union": {"$concatArrays": ["$collection1", "$collection2"]}
+                    }},
+                    {"$unwind": "$Union"},  # Unwind the union collection into a result set.
+                    {"$replaceRoot": {"newRoot": "$Union"}},  # Replace the root to cleanup the resulting documents.
+                    # {"$limit": 20},
+                    # {"$skip": 2*20},
+                    # {"$sort": {"dated": -1}}
+                ]
+                c = collection.aggregate(pipeline)
+                page = 1
+                page_size = 20
+                data = list(c)
+                result = json.loads(dumps(data))
+                start_length = 0 if page == 1 else (page - 1) * page_size + 1
+                end_length = page_size if page == 1 else page * page_size + 1
+                print(start_length)
+                print(end_length)
+                return responses.ok(data={"count": len(result), "result": result[start_length:end_length]},
+                                    method=constant.GET, entity_name='sql_function')
