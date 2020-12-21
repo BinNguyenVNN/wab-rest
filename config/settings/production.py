@@ -33,7 +33,7 @@ CORS_ALLOW_HEADERS = (
     'x-wabapp-alert',
     'x-wabapp-error',
     'x-wabapp-params',
-    'x-wabapp-total-count'
+    'x-wabapp-total-count',
     '*'
 )
 
@@ -51,7 +51,7 @@ CORS_EXPOSE_HEADERS = (
     'x-wabapp-alert',
     'x-wabapp-error',
     'x-wabapp-params',
-    'x-wabapp-total-count'
+    'x-wabapp-total-count',
     '*'
 )
 # DATABASES
@@ -200,6 +200,6 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-WAB_FE = 'http://localhost:4200/'
+WAB_FE = 'http://174.138.18.130:5000/'
 WAB_API = 'https://persei.risotech.vn/'
 PASSWORD_RESET_TIMEOUT_DAYS = 1

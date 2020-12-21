@@ -24,203 +24,59 @@ class SqlViewTest(ListAPIView):
                 db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 collection = db["order_items"]
                 pipeline = [
-                    {
-                        "$match": {"product_id": "ef92defde845ab8450f9d70c526ef70f"}
-                    },
-                    {"$limit": 1},
-                    { "$project": { "_id": '$$REMOVE' } },
-                    {"$lookup": {
-                        "from": 'order_reviews', "pipeline": [
-                            {"$limit": 1},
-                            {
-                                "$match": {"review_score": "5"}
-                            },
-                        ], "as": 'order_reviews'}},
-                    {"$lookup": {
-                        "from": 'order_items', "pipeline": [
-                            {
-                                "$match": {"product_id": "ef92defde845ab8450f9d70c526ef70f"}
-                            },
-                        ], "as": 'order_items'}},
-                    {
-                        "$project":
-                            {
-                                "Union": {"$setUnion": ["$order_items", "$order_reviews"]}
-                            }
-                    },
-                    {"$unwind": "$Union"},
-                    {"$replaceRoot": {"newRoot": "$Union"}}
-                    # {
-                    #     "$match": {"product_id": "ef92defde845ab8450f9d70c526ef70f"}
-                    # },
-                    # {
-                    #
-                    #     "$lookup": {
-                    #         "from": "order_reviews",
-                    #         "pipeline": [
-                    #             {"$limit": 20},
-                    #             {"$project": {"_id": 0, "review_score": 1}},
-                    #             {
-                    #                 "$match": {"review_score": "5"}
-                    #             },
-                    #         ],
-                    #         "as": "order_reviews"
-                    #     }
-                    # },
-                    # {"$unwind": "$order_reviews"},
-                    # {
-                    #     "$group": {
-                    #         "_id": "$_id",
-                    #         "order_items": {
-                    #             "$push": {
-                    #                 "type": "order_items",
-                    #                 "price": "$price",
-                    #             }
-                    #         },
-                    #         "order_reviews": {
-                    #             "$first": "$order_reviews"
-                    #         },
-                    #     }
-                    # },
-                    # {
-                    #     "$project": {
-                    #         "items": {
-                    #             "$setUnion": ["$order_items", "$order_reviews"]
-                    #         }
-                    #     }
-                    # },
-                    # {
-                    #     "$unwind": "$items"
-                    # },
-                    # {
-                    #     "$replaceRoot": {
-                    #         "newRoot": "$items"
-                    #     }
-                    # }
-                    # },
-                    # {
-                    #     "$project": {
-                    #         "_id": 1,
-                    #         "price": 1,
-                    #         "review_score": 1,
-                    #     }
-                    # }
+                    {"$limit": 5},
+                    {"$facet": {
+                        "collection1": [
+                            {"$limit": 10},
+                            {"$lookup": {
+                                "from": "order_items",
+                                "pipeline": [
+                                    {"$match": {
+                                        # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
+                                        #"order_id": "a548910a1c6147796b98fdf73dbeba33"
+                                        "price": {"$gte": 100}
+                                    }},
+                                    # {"$project": {
+                                    #     "_id": 0, "price": 1
+                                    # }}
+                                ],
+                                "as": "collection1"
+                            }}
+                        ],
+                        "collection2": [
+                            {"$limit": 10},
+                            {"$lookup": {
+                                "from": "order_reviews",
+                                "pipeline": [
+                                    {"$match": {
+                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33",
+                                        "review_score": "1"
+                                    }},
+                                    # {"$project": {
+                                    #     "_id": 0, "review_score": 1
+                                    # }}
+                                ],
+                                "as": "collection2"
+                            }}
+                        ]
+                    }},
+                    {"$project": {
+                        "data": {
+                            "$concatArrays": [
+                                {"$arrayElemAt": ["$collection1.collection1", 0]},
+                                {"$arrayElemAt": ["$collection2.collection2", 0]},
+                            ]
+                        }
+                    }},
+                    {"$project": {
+                        "item": {
+                            "$mergeObjects": "$data"
+                        }
+                    }},
+                    {"$unwind": "$item"},
+                    {"$replaceRoot": {"newRoot": "$item"}},
+                    # {"$sort": {"dated": -1}}
                 ]
-                pipeline1 = [
-                    {"$limit": 20},
-                    {
-                        "$lookup": {
-                            "from": "order_reviews",
-                            "pipeline": [
-                                {"$limit": 20},
-                                {"$project": {"_id": 0, "review_score": 1}},
-                                {
-                                    "$match": {"review_score": "5"}
-                                },
-                            ],
-                            "as": "order_reviews"
-                        }
-                    },
-                    {"$addFields":
-                        {
-                            "order_reviews": {
-                                "$map": {
-                                    "input": "$order_reviews",
-                                    "as": "tbl2",
-                                    "in": {
-                                        "_id": "$$tbl2._id",
-                                        "type": "order_reviews",
-                                        "review_score": "$$tbl2.review_score",
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": None,
-                            "order_items": {
-                                "$push": {
-                                    "_id": "$_id",
-                                    "type": "order_items",
-                                    "price": "$price",
-                                }
-                            },
-                            "order_reviews": {
-                                "$first": "$order_reviews"
-                            }
-                        }
-                    },
-                    {
-                        "$project": {
-                            "items": {
-                                "$setUnion": ["$order_items", "$order_reviews"]
-                            }
-                        }
-                    },
-                    {
-                        "$unwind": "$items"
-                    },
-                    {
-                        "$replaceRoot": {
-                            "newRoot": "$items"
-                        }
-                    }
-                ]
-                # pipeline = [
-                #     {
-                #         "$match":
-                #             {
-                #                 "order_id": "00048cc3ae777c65dbb7d2a0634bc1ea"
-                #             }
-                #     },
-                #     {"$project": {"_id": '$$REMOVE'}},
-                #     {"$lookup": {"from": 'order_reviews', "pipeline": [
-                #         {
-                #             "$match":
-                #                 {
-                #                     "order_id": "00048cc3ae777c65dbb7d2a0634bc1ea"
-                #                 }
-                #         }
-                #     ], "as": 'order_reviews'}},
-                #     {"$lookup": {"from": 'order_items', "pipeline": [
-                #         {
-                #             "$match":
-                #                 {
-                #                     "order_id": "00048cc3ae777c65dbb7d2a0634bc1ea"
-                #                 }
-                #         }
-                #     ], "as": 'order_items'}},
-                #     # {
-                #     #     "$project":
-                #     #         {
-                #     #             "Union": {"$concatArrays": ["$order_reviews", "$order_items"]}
-                #     #         }
-                #     # },
-                #     #
-                #     # {"$unwind": "$Union"},
-                #     # {"$replaceRoot": {"newRoot": "$Union"}}
-                #     { "$unwind": {"path": "$order_reviews", "preserveNullAndEmptyArrays": True}},
-                #     { "$unwind": {"path": "$order_items", "preserveNullAndEmptyArrays": True}}
-                # ]
-                # pipeline = [
-                #     {
-                #         "$lookup": {
-                #             "from": "order_reviews",
-                #             "localField": "order_id",
-                #             "foreignField": "order_id",
-                #             "as": "data"
-                #         }
-                #     },
-                #     {"$unwind": "$data"},
-                #     {"$match": {
-                #         "$and": [
-                #             {"order_id": "a548910a1c6147796b98fdf73dbeba33"},
-                #             {"data.review_id": "80e641a11e56f04c1ad469d5645fdfde"}
-                #         ]}},
-                #     {"$sort": {"order_id": -1}}
-                #
-                # ]
                 c = collection.aggregate(pipeline)
                 data = list(c)
                 result = json.loads(dumps(data))
