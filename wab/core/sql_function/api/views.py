@@ -12,6 +12,7 @@ from bson.json_util import dumps
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
 
+
 class SqlFunctionListView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
@@ -189,6 +190,7 @@ class SqlFunctionDeleteView(DestroyAPIView):
             return responses.bad_request(data=None, message_code='DELETE_SQL_FUNCTION_HAS_ERROR',
                                          message_system=err)
 
+
 class SqlViewTest(ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny, ]
@@ -212,7 +214,7 @@ class SqlViewTest(ListAPIView):
                                 "pipeline": [
                                     {"$match": {
                                         # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
-                                        #"order_id": "a548910a1c6147796b98fdf73dbeba33"
+                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33"
                                         "price": {"$gte": 100}
                                     }},
                                     # {"$project": {
