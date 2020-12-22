@@ -8,6 +8,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
 from wab.core.db_provider.models import DbProvider, DBProviderConnection
+from wab.core.serializers import SwaggerSerializer
 from wab.utils import responses, constant, token_authentication
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
@@ -65,6 +66,7 @@ class DBConnectionCreateView(CreateAPIView):
 class DBConnectionListTableView(ListAPIView):
     authentication_classes = (token_authentication.JWTAuthenticationBackend, )
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         connection_id = kwargs.get('pk', None)
@@ -92,6 +94,7 @@ class DBConnectionListTableView(ListAPIView):
 class DBConnectionListColumnView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         table_name = kwargs.get('table', None)
@@ -117,6 +120,7 @@ class DBConnectionListColumnView(ListAPIView):
 class DBConnectionListDataView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         table_name = kwargs.get('table', None)

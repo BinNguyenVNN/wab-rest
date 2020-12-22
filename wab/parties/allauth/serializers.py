@@ -1,5 +1,3 @@
-from abc import ABC
-
 from django.contrib.auth.models import update_last_login
 from django.db.models import Q
 from rest_framework import serializers

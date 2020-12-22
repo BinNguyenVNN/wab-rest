@@ -1,71 +1,99 @@
 from rest_framework import serializers
 
-from wab.core.custom_column.models import CustomColumnType, ValidationType, ValidationRegex, ColumnValidation
+from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, CustomColumnConfigType, \
+    CustomColumnConfigValidation, CustomColumnConfigTypeValidator
 
 
-class CustomColumnTypeSerializer(serializers.ModelSerializer):
+class CustomColumnRegexTypeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomColumnType
-        fields = ["id", "name", "type", "is_key"]
-        lookup_field = "id"
-
-
-class ValidationTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ValidationType
-        fields = ["id", "name", "is_regex"]
-        lookup_field = "id"
-
-
-class ValidationRegexSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ValidationRegex
+        model = CustomColumnRegexType
         fields = ["id", "name"]
         lookup_field = "id"
 
 
-class ListColumnValidationSerializer(serializers.ModelSerializer):
-    custom_column_type = serializers.SerializerMethodField()
-    validation_type = serializers.SerializerMethodField()
-    validation_regex = serializers.SerializerMethodField()
+class CustomColumnConfigTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomColumnConfigType
+        fields = ["id", "name"]
+        lookup_field = "id"
 
-    def get_custom_column_type(self, obj):
-        if obj.custom_column_type:
-            custom_column_type = CustomColumnType.objects.filter(id=obj.custom_column_type.id).first()
-            if custom_column_type:
-                return CustomColumnTypeSerializer(custom_column_type).data
-            else:
-                return None
-        else:
-            return None
 
-    def get_validation_type(self, obj):
-        if obj.validation_type:
-            validation_type = ValidationType.objects.filter(id=obj.validation_type.id).first()
-            if validation_type:
-                return ValidationTypeSerializer(validation_type).data
-            else:
-                return None
-        else:
-            return None
+class CustomColumnConfigTypeValidatorSerializer(serializers.ModelSerializer):
+    custom_column_config_type = serializers.SerializerMethodField()
+    custom_column_config_type_id = serializers.IntegerField(allow_null=True)
 
-    def get_validation_regex(self, obj):
-        if obj.validation_regex:
-            validation_regex = ValidationRegex.objects.filter(id=obj.validation_regex.id).first()
-            if validation_regex:
-                return ValidationRegexSerializer(validation_regex).data
-            else:
-                return None
-        else:
-            return None
+    custom_column_config_validation = serializers.SerializerMethodField()
+    custom_column_config_validation_id = serializers.IntegerField(allow_null=True)
+
+    custom_column_regex_type = serializers.SerializerMethodField()
+    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
+
+    def get_custom_column_config_type(self, obj):
+        if obj.custom_column_config_type:
+            serializer = CustomColumnConfigTypeSerializer(obj.custom_column_config_type)
+            return serializer.data
+        return None
+
+    def get_custom_column_regex_type_id(self, obj):
+        return obj.custom_column_regex_type_id
+
+    def get_custom_column_config_validation(self, obj):
+        if obj.custom_column_config_validation:
+            serializer = CustomColumnConfigValidationSerializer(obj.custom_column_config_validation)
+            return serializer.data
+        return None
+
+    def get_custom_column_config_validation_id(self, obj):
+        return obj.custom_column_config_validation_id
+
+    def get_custom_column_regex_type(self, obj):
+        if obj.custom_column_regex_type:
+            serializer = CustomColumnRegexTypeSerializer(obj.custom_column_regex_type)
+            return serializer.data
+        return None
+
+    def get_custom_column_regex_type_id(self, obj):
+        return obj.custom_column_regex_type_id
 
     class Meta:
-        model = ColumnValidation
+        model = CustomColumnConfigTypeValidator
         fields = '__all__'
+        lookup_field = "id"
 
 
-class ColumnValidationSerializer(serializers.ModelSerializer):
+class CustomColumnConfigValidationSerializer(serializers.ModelSerializer):
+    custom_column_regex_type = serializers.SerializerMethodField()
+    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
+
+    def get_custom_column_regex_type(self, obj):
+        if obj.custom_column_regex_type:
+            serializer = CustomColumnRegexTypeSerializer(obj.custom_column_regex_type)
+            return serializer.data
+        return None
+
+    def get_custom_column_regex_type_id(self, obj):
+        return obj.custom_column_regex_type_id
+
     class Meta:
-        model = ColumnValidation
-        fields = ["id", "custom_column_type", "validation_type", "validation_regex", "name", "value", "regex",
-                  "is_protect"]
+        model = CustomColumnConfigValidation
+        fields = '__all__'
+        lookup_field = "id"
+
+
+class CustomColumnTypeSerializer(serializers.ModelSerializer):
+    custom_column_config_type = serializers.SerializerMethodField()
+    custom_column_config_type_id = serializers.IntegerField(allow_null=True)
+
+    def get_custom_column_config_type(self, obj):
+        if obj.custom_column_config_type:
+            serializer = CustomColumnConfigTypeSerializer(obj.custom_column_config_type)
+            return serializer.data
+        return None
+
+    def get_custom_column_config_type_id(self, obj):
+        return obj.custom_column_config_type_id
+
+    class Meta:
+        model = CustomColumnType
+        fields = '__all__'
+        lookup_field = "id"

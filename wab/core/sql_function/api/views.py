@@ -3,6 +3,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, D
 from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
+from wab.core.serializers import SwaggerSerializer
 from wab.core.sql_function.api.serializers import SqlFunctionSerializer
 from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionCondition, \
     SqlFunctionConditionItems
@@ -91,6 +92,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
+    queryset = SqlFunction.objects.all()
 
     @transaction.atomic()
     def put(self, request, *args, **kwargs):
@@ -107,7 +109,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Update SqlFunction
-                sql_function = SqlFunction.objects.get(
+                sql_function = self.get_queryset().get(
                     id=sql_function_id
                 )
                 sql_function.name = name
@@ -149,12 +151,14 @@ class SqlFunctionUpdateView(UpdateAPIView):
 class SqlFunctionDeleteView(DestroyAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
+    serializer_class = SwaggerSerializer
+    queryset = SqlFunction.objects.all()
 
     @transaction.atomic()
     def delete(self, request, *args, **kwargs):
         sql_function_id = kwargs.get("pk")
         try:
-            sql_function = SqlFunction.objects.get(id=sql_function_id)
+            sql_function = self.get_queryset().get(id=sql_function_id)
 
             # Delete SqlFunctionOrderBy
             sql_function_order_bys = SqlFunctionOrderBy.objects.all()
@@ -191,10 +195,11 @@ class SqlFunctionDeleteView(DestroyAPIView):
                                          message_system=err)
 
 
-class SqlViewTest(ListAPIView):
+class SqlJoinViewTest(ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request):
         provider_connection = self.queryset.get(id=1)
@@ -205,60 +210,104 @@ class SqlViewTest(ListAPIView):
                 db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 collection = db["order_items"]
                 pipeline = [
-                    {"$limit": 5},
-                    {"$facet": {
-                        "collection1": [
-                            {"$limit": 10},
-                            {"$lookup": {
-                                "from": "order_items",
-                                "pipeline": [
-                                    {"$match": {
-                                        # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
-                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33"
-                                        "price": {"$gte": 100}
-                                    }},
-                                    # {"$project": {
-                                    #     "_id": 0, "price": 1
-                                    # }}
-                                ],
-                                "as": "collection1"
-                            }}
-                        ],
-                        "collection2": [
-                            {"$limit": 10},
-                            {"$lookup": {
-                                "from": "order_reviews",
-                                "pipeline": [
-                                    {"$match": {
-                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33",
-                                        "review_score": "1"
-                                    }},
-                                    # {"$project": {
-                                    #     "_id": 0, "review_score": 1
-                                    # }}
-                                ],
-                                "as": "collection2"
-                            }}
-                        ]
-                    }},
-                    {"$project": {
-                        "data": {
-                            "$concatArrays": [
-                                {"$arrayElemAt": ["$collection1.collection1", 0]},
-                                {"$arrayElemAt": ["$collection2.collection2", 0]},
-                            ]
-                        }
-                    }},
-                    {"$project": {
-                        "item": {
-                            "$mergeObjects": "$data"
-                        }
-                    }},
-                    {"$unwind": "$item"},
-                    {"$replaceRoot": {"newRoot": "$item"}},
-                    # {"$sort": {"dated": -1}}
+                    {"$limit": 20},
+                    {"$skip": 0},
+                    {"$project": {"_id": 0}},
+                    {
+                        "$lookup": {
+                            "from": "order_reviews",
+                            "localField": "order_id",
+                            "foreignField": "order_id",
+                            "as": "data",
+                        },
+                    },
+                    # {"$unwind": "$data"},
+                    # {"$match": {
+                    #     "$and": [
+                    #         {"order_id": "a548910a1c6147796b98fdf73dbeba33"},
+                    #         {"data.review_id": "80e641a11e56f04c1ad469d5645fdfde"}
+                    #     ]}},
+                    {"$sort": {"order_id": -1}},
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}}
+
                 ]
                 c = collection.aggregate(pipeline)
                 data = list(c)
                 result = json.loads(dumps(data))
                 return responses.ok(data=result, method=constant.GET, entity_name='sql_function')
+
+
+class SqlUnionViewTest(ListAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
+
+    def get(self, request):
+        provider_connection = self.queryset.get(id=1)
+        provider = provider_connection.provider
+        if provider:
+            if provider.name == MONGO:
+                mongo_db_manager = MongoDBManager()
+                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                collection = db["order_items"]
+
+                pipeline = [
+                    {"$limit": 1},  # Reduce the result set to a single document.
+                    {"$project": {"_id": 1}},  # Strip all fields except the Id.
+                    {"$project": {"_id": 0}},  # Strip the id. The document is now empty.
+                    {"$lookup": {
+                        "from": "order_items",
+                        "pipeline": [
+                            {"$match": {
+                                # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
+                                # "order_id": "a548910a1c6147796b98fdf73dbeba33"
+                                # "price": {"$lte": {"$toInt":"810"}}
+                                "order_item_id": "1"
+                            }
+                            },
+                            {"$project": {
+                                "_id": 0, "result": "$price"
+                            }}
+                        ],
+                        "as": "collection1"
+                    }},
+                    {"$lookup": {
+                        "from": "order_reviews",
+                        "pipeline": [
+                            {"$match": {
+                                # "order_id": "a548910a1c6147796b98fdf73dbeba33",
+                                "review_score": "5"
+                            }
+                            },
+                            {"$project": {
+                                "_id": 0, "result": "$review_score"
+                            }}
+                        ],
+
+                        "as": "collection2"
+                    }},
+                    {"$project": {
+                        "Union": {"$setUnion": ["$collection1", "$collection2"]}
+                    }},
+                    {"$unwind": "$Union"},  # Unwind the union collection into a result set.
+                    {"$replaceRoot": {"newRoot": "$Union"}},  # Replace the root to cleanup the resulting documents.
+                    # {"$limit": 20},
+                    # {"$skip": 2*20},
+                    # {"$sort": {"dated": -1}}
+                ]
+                c = collection.aggregate(pipeline)
+                page = 1
+                page_size = 20
+                data = list(c)
+                result = json.loads(dumps(data))
+                start_length = 0 if page == 1 else (page - 1) * page_size + 1
+                end_length = page_size if page == 1 else page * page_size + 1
+                print(start_length)
+                print(end_length)
+                return responses.ok(data={"count": len(result), "result": result[start_length:end_length]},
+                                    method=constant.GET, entity_name='sql_function')

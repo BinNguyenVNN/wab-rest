@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ table_name }}</title>
+  <style type="text/css">
+    @page {
+      size: a4;
+      margin: 2cm;
+    }
+
+    /* Normal */
+    @font-face {
+      font-family: open-sans;
+      src: url({% static 'font/OpenSans-Regular.ttf' %});
+    }
+
+    /* Bold */
+    @font-face {
+      font-family: open-sans;
+      src: url({% static 'font/OpenSans-Bold.ttf' %});
+      font-weight: bold;
+    }
+
+    /* Italic */
+    @font-face {
+      font-family: open-sans;
+      src: url({% static 'font/OpenSans-Italic.ttf' %});
+      font-style: italic;
+    }
+
+    /* Bold Italic */
+    @font-face {
+      font-family: open-sans;
+      src: url({% static 'font/OpenSans-BoldItalic.ttf' %});
+      font-style: italic;
+      font-weight: bold;
+    }
+
+    hr {
+      color: #86ba49;
+    }
+
+    html {
+      font-family: open-sans;
+    }
+
+    body {
+      font-family: open-sans;
+      font-size: 8pt;
+      color: #4d4d4d;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+    #parties td {
+      vertical-align: top;
+    }
+
+    #entries {
+      margin-top: 1cm;
+    }
+
+    #entries th {
+      text-align: left;
+    }
+
+    #entries th.price {
+      text-align: left;
+    }
+
+    #entries tr {
+      padding: 5pt 0 1pt;
+      border-bottom: 1pt solid #ddd;
+    }
+
+    #entries tbody td {
+      vertical-align: top;
+    }
+
+    #entries tbody td {
+      padding-right: 3pt;
+    }
+
+    #entries tfoot {
+      font-weight: bold;
+    }
+
+    #entries tfoot tr {
+      border-bottom: none;
+    }
+
+    #entries tfoot td {
+      vertical-align: top;
+    }
+
+    #entries tfoot .total {
+      padding-left: 5pt;
+      padding-right: 5pt;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<div id="header">
+  <table>
+    <tr>
+      <td class="title">
+        <h1>{{ table_name }}</h1>
+      </td>
+    </tr>
+  </table>
+</div>
+<table id="entries">
+        <thead>
+            <tr>
+              {% for c in columns %}
+                <th>
+                    <i>{{ c }}</i><br>
+                </th>
+              {% endfor %}
+            </tr>
+        </thead>
+        <hr color="#86ba49" size="0.5mm">
+        <tbody>
+{#            {% for entry in data %}#}
+{#                <tr>#}
+{#                  {% for key in entry %}#}
+{#                    <td class="index">#}
+{#                        {{ key }}#}
+{#                    </td>#}
+{#                  {% endfor %}#}
+{#                </tr>#}
+{#            {% endfor %}#}
+        {% for entry in data %}
+                <tr>
+                    <td class="index">
+                        {{ entry }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
