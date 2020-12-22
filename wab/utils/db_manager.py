@@ -97,45 +97,45 @@ class MongoDBManager(object):
     def union(db, table_1, field_1, table_2, field_2, condition_items, order_by):
         if order_by is None:
             order_by = field_1
-            list_match_and_tb1 = []
-            list_match_or_tb1 = []
-            list_match_and_tb2 = []
-            list_match_or_tb2 = []
-            for condition in condition_items:
-                if condition.table_name == table_1:
-                    if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                        if condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {condition.field_name: {"$eq": condition.value}}
-                        elif condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {condition.field_name: {"$in": [condition.value]}}
-                        else:
-                            item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
-                        list_match_and_tb1.append(item)
+        list_match_and_tb1 = []
+        list_match_or_tb1 = []
+        list_match_and_tb2 = []
+        list_match_or_tb2 = []
+        for condition in condition_items:
+            if condition.table_name == table_1:
+                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$in": [condition.value]}}
                     else:
-                        if condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {condition.field_name: {"$eq": condition.value}}
-                        elif condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {condition.field_name: {"$in": [condition.value]}}
-                        else:
-                            item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
-                        list_match_or_tb1.append(item)
+                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_and_tb1.append(item)
                 else:
-                    if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                        if condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {"data." + condition.field_name: {"$eq": condition.value}}
-                        elif condition.operator == OPERATOR.get_value('type_in'):
-                            item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                        else:
-                            item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
-                        list_match_and_tb2.append(item)
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$in": [condition.value]}}
                     else:
-                        if condition.operator == OPERATOR.get_value('type_equal'):
-                            item = {"data." + condition.field_name: {"$eq": condition.value}}
-                        elif condition.operator == OPERATOR.get_value('type_in'):
-                            item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                        else:
-                            item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
-                        list_match_or_tb2.append(item)
+                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_or_tb1.append(item)
+            else:
+                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {"data." + condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_in'):
+                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_and_tb2.append(item)
+                else:
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {"data." + condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_in'):
+                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_or_tb2.append(item)
         pipeline = [
             {"$limit": 1},  # Reduce the result set to a single document.
             {"$project": {"_id": 1}},  # Strip all fields except the Id.

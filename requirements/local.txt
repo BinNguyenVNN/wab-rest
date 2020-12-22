@@ -2,7 +2,7 @@
 
 Werkzeug==1.0.1 # https://github.com/pallets/werkzeug
 ipdb==0.13.4  # https://github.com/gotcha/ipdb
-psycopg2==2.8.6  # https://github.com/psycopg/psycopg2
+# psycopg2==2.8.6  # https://github.com/psycopg/psycopg2
 
 # Testing
 # ------------------------------------------------------------------------------
@@ -38,5 +38,8 @@ pytest-django==4.1.0  # https://github.com/pytest-dev/pytest-django
 # Mongo DB
 pymongo==3.11.2
 dnspython==2.0.0
-
+# Mail
 django-anymail[sendgrid]==8.1  # https://github.com/anymail/django-anymail
+# PDF
+xhtml2pdf==0.2.5
+PyPDF2==1.26.0
