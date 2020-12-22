@@ -20,13 +20,13 @@ class CustomColumnConfigTypeSerializer(serializers.ModelSerializer):
 
 class CustomColumnConfigTypeValidatorSerializer(serializers.ModelSerializer):
     custom_column_config_type = serializers.SerializerMethodField()
-    custom_column_config_type_id = serializers.IntegerField()
+    custom_column_config_type_id = serializers.IntegerField(allow_null=True)
 
     custom_column_config_validation = serializers.SerializerMethodField()
-    custom_column_config_validation_id = serializers.IntegerField()
+    custom_column_config_validation_id = serializers.IntegerField(allow_null=True)
 
     custom_column_regex_type = serializers.SerializerMethodField()
-    custom_column_regex_type_id = serializers.IntegerField()
+    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
 
     def get_custom_column_config_type(self, obj):
         if obj.custom_column_config_type:
@@ -63,7 +63,7 @@ class CustomColumnConfigTypeValidatorSerializer(serializers.ModelSerializer):
 
 class CustomColumnConfigValidationSerializer(serializers.ModelSerializer):
     custom_column_regex_type = serializers.SerializerMethodField()
-    custom_column_regex_type_id = serializers.IntegerField()
+    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
 
     def get_custom_column_regex_type(self, obj):
         if obj.custom_column_regex_type:
@@ -82,7 +82,7 @@ class CustomColumnConfigValidationSerializer(serializers.ModelSerializer):
 
 class CustomColumnTypeSerializer(serializers.ModelSerializer):
     custom_column_config_type = serializers.SerializerMethodField()
-    custom_column_config_type_id = serializers.IntegerField()
+    custom_column_config_type_id = serializers.IntegerField(allow_null=True)
 
     def get_custom_column_config_type(self, obj):
         if obj.custom_column_config_type:
