@@ -3,6 +3,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, D
 from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
+from wab.core.serializers import SwaggerSerializer
 from wab.core.sql_function.api.serializers import SqlFunctionSerializer
 from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionCondition, \
     SqlFunctionConditionItems
@@ -91,6 +92,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
+    queryset = SqlFunction.objects.all()
 
     @transaction.atomic()
     def put(self, request, *args, **kwargs):
@@ -107,7 +109,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Update SqlFunction
-                sql_function = SqlFunction.objects.get(
+                sql_function = self.get_queryset().get(
                     id=sql_function_id
                 )
                 sql_function.name = name
@@ -149,12 +151,14 @@ class SqlFunctionUpdateView(UpdateAPIView):
 class SqlFunctionDeleteView(DestroyAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
+    serializer_class = SwaggerSerializer
+    queryset = SqlFunction.objects.all()
 
     @transaction.atomic()
     def delete(self, request, *args, **kwargs):
         sql_function_id = kwargs.get("pk")
         try:
-            sql_function = SqlFunction.objects.get(id=sql_function_id)
+            sql_function = self.get_queryset().get(id=sql_function_id)
 
             # Delete SqlFunctionOrderBy
             sql_function_order_bys = SqlFunctionOrderBy.objects.all()
@@ -195,6 +199,7 @@ class SqlJoinViewTest(ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request):
         provider_connection = self.queryset.get(id=1)
@@ -240,6 +245,7 @@ class SqlUnionViewTest(ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request):
         provider_connection = self.queryset.get(id=1)

@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 from wab.core.db_provider.models import DBProviderConnection
-from wab.core.sql_function.api.serializers import SqlFunctionSerializer
+from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses
 import json
 from bson.json_util import dumps
@@ -18,6 +18,7 @@ class ExportPdfView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         start = request.GET.get('start', None)
@@ -61,7 +62,7 @@ class ExportPdfView(ListAPIView):
 class ExportExcelView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
-    serializer_class = SqlFunctionSerializer
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         try:
@@ -112,7 +113,7 @@ class ExportExcelView(ListAPIView):
 class ExportTextView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
-    serializer_class = SqlFunctionSerializer
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         try:
