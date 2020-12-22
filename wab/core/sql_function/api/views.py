@@ -191,7 +191,7 @@ class SqlFunctionDeleteView(DestroyAPIView):
                                          message_system=err)
 
 
-class SqlViewTest(ListAPIView):
+class SqlJoinViewTest(ListAPIView):
     authentication_classes = []
     permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
@@ -205,58 +205,30 @@ class SqlViewTest(ListAPIView):
                 db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 collection = db["order_items"]
                 pipeline = [
-                    {"$limit": 5},
-                    {"$facet": {
-                        "collection1": [
-                            {"$limit": 10},
-                            {"$lookup": {
-                                "from": "order_items",
-                                "pipeline": [
-                                    {"$match": {
-                                        # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
-                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33"
-                                        "price": {"$gte": 100}
-                                    }},
-                                    # {"$project": {
-                                    #     "_id": 0, "price": 1
-                                    # }}
-                                ],
-                                "as": "collection1"
-                            }}
-                        ],
-                        "collection2": [
-                            {"$limit": 10},
-                            {"$lookup": {
-                                "from": "order_reviews",
-                                "pipeline": [
-                                    {"$match": {
-                                        # "order_id": "a548910a1c6147796b98fdf73dbeba33",
-                                        "review_score": "1"
-                                    }},
-                                    # {"$project": {
-                                    #     "_id": 0, "review_score": 1
-                                    # }}
-                                ],
-                                "as": "collection2"
-                            }}
-                        ]
-                    }},
-                    {"$project": {
-                        "data": {
-                            "$concatArrays": [
-                                {"$arrayElemAt": ["$collection1.collection1", 0]},
-                                {"$arrayElemAt": ["$collection2.collection2", 0]},
-                            ]
-                        }
-                    }},
-                    {"$project": {
-                        "item": {
-                            "$mergeObjects": "$data"
-                        }
-                    }},
-                    {"$unwind": "$item"},
-                    {"$replaceRoot": {"newRoot": "$item"}},
-                    # {"$sort": {"dated": -1}}
+                    {"$limit": 20},
+                    {"$skip": 0},
+                    {"$project": {"_id": 0}},
+                    {
+                        "$lookup": {
+                            "from": "order_reviews",
+                            "localField": "order_id",
+                            "foreignField": "order_id",
+                            "as": "data",
+                        },
+                    },
+                    # {"$unwind": "$data"},
+                    # {"$match": {
+                    #     "$and": [
+                    #         {"order_id": "a548910a1c6147796b98fdf73dbeba33"},
+                    #         {"data.review_id": "80e641a11e56f04c1ad469d5645fdfde"}
+                    #     ]}},
+                    {"$sort": {"order_id": -1}},
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}}
+
                 ]
                 c = collection.aggregate(pipeline)
                 data = list(c)
@@ -288,7 +260,8 @@ class SqlUnionViewTest(ListAPIView):
                             {"$match": {
                                 # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
                                 # "order_id": "a548910a1c6147796b98fdf73dbeba33"
-                                "price": "810"
+                                # "price": {"$lte": {"$toInt":"810"}}
+                                "order_item_id": "1"
                             }
                             },
                             {"$project": {
@@ -302,7 +275,7 @@ class SqlUnionViewTest(ListAPIView):
                         "pipeline": [
                             {"$match": {
                                 # "order_id": "a548910a1c6147796b98fdf73dbeba33",
-                                "review_score": "1"
+                                "review_score": "5"
                             }
                             },
                             {"$project": {
@@ -313,7 +286,7 @@ class SqlUnionViewTest(ListAPIView):
                         "as": "collection2"
                     }},
                     {"$project": {
-                        "Union": {"$concatArrays": ["$collection1", "$collection2"]}
+                        "Union": {"$setUnion": ["$collection1", "$collection2"]}
                     }},
                     {"$unwind": "$Union"},  # Unwind the union collection into a result set.
                     {"$replaceRoot": {"newRoot": "$Union"}},  # Replace the root to cleanup the resulting documents.

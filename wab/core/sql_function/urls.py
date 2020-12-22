@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from wab.core.sql_function.api.views import SqlFunctionListView, SqlFunctionCreateView, SqlFunctionUpdateView, \
-    SqlFunctionDeleteView, SqlViewTest, SqlUnionViewTest
+    SqlFunctionDeleteView, SqlJoinViewTest, SqlUnionViewTest
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -11,7 +11,7 @@ else:
     router = SimpleRouter()
 
 urlpatterns = [
-                  path('test/', SqlViewTest.as_view(),
+                  path('test-join/', SqlJoinViewTest.as_view(),
                        name='SqlViewTest'),
                   path('test-union/', SqlUnionViewTest.as_view(),
                        name='SqlUnionViewTest'),
