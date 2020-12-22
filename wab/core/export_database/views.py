@@ -1,17 +1,12 @@
 import io
 from datetime import datetime
-
 import xlsxwriter as xlsxwriter
-from django.db import transaction
 from django.http import HttpResponse
-from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
-
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.sql_function.api.serializers import SqlFunctionSerializer
-from wab.core.sql_function.models import SqlFunction
-from wab.utils import token_authentication, responses, constant
+from wab.utils import token_authentication, responses
 import json
 from bson.json_util import dumps
 from wab.utils.constant import MONGO
@@ -21,6 +16,7 @@ from wab.utils.export_manager import GeneratePdf
 
 class ExportPdfView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -62,14 +58,14 @@ class ExportPdfView(ListAPIView):
             return responses.not_found(data=None, message_code='EXPORT_ERROR', message_system=err)
 
 
-class ExportExcelView(CreateAPIView):
+class ExportExcelView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
 
     def get(self, request, *args, **kwargs):
         try:
-            connection_id = kwargs.get("connction")
+            connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
@@ -113,14 +109,14 @@ class ExportExcelView(CreateAPIView):
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
 
 
-class ExportTextView(CreateAPIView):
+class ExportTextView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
 
     def get(self, request, *args, **kwargs):
         try:
-            connection_id = kwargs.get("connction")
+            connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
@@ -149,7 +145,6 @@ class ExportTextView(CreateAPIView):
                             content += ', '
                         else:
                             content += '\n'
-
 
                 today = datetime.now().strftime("%d/%m/%Y_%H%M%S")
                 filename = f"ExportData-{table_name}-{today}.txt"
