@@ -46,10 +46,10 @@ class CustomColumnConfigType(BaseModel):
 
 
 class CustomColumnConfigTypeValidator(BaseModel):
-    customer_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
-                                                    blank=True)
-    customer_column_config_validation = models.ForeignKey(CustomColumnConfigValidation, on_delete=models.CASCADE,
-                                                          null=True, blank=True)
+    custom_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
+                                                  blank=True)
+    custom_column_config_validation = models.ForeignKey(CustomColumnConfigValidation, on_delete=models.CASCADE,
+                                                        null=True, blank=True)
     name = models.CharField(null=True, blank=True, max_length=255)
     value = models.CharField(null=True, blank=True, max_length=255)
     custom_column_regex_type = models.ForeignKey(CustomColumnRegexType, on_delete=models.CASCADE, null=True, blank=True)
@@ -67,8 +67,8 @@ class CustomColumnConfigTypeValidator(BaseModel):
 class CustomColumnType(BaseModel):
     name = models.CharField(null=True, blank=True, max_length=255)
     is_key = models.BooleanField(default=True)
-    customer_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
-                                                    blank=True)
+    custom_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
+                                                  blank=True)
 
     def __str__(self):
         return self.name
