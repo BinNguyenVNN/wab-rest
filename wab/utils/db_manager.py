@@ -67,7 +67,7 @@ class MongoDBManager(object):
         collections = db.list_collection_names()
         return collections
 
-    def get_all_documents(self, db, collection, column_sort, page, page_size, sort=pymongo.DESCENDING):
+    def get_all_documents(self, db, collection, column_sort, page=1, page_size=20, sort=pymongo.DESCENDING):
         if column_sort:
             documents = db[collection].find({}).sort(column_sort, sort).skip((page - 1) * page_size).limit(page_size)
         else:

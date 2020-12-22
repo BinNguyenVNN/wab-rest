@@ -3,24 +3,26 @@ from __future__ import absolute_import
 import logging
 from datetime import datetime
 from io import BytesIO, SEEK_SET
+from wsgiref.util import FileWrapper
 
+from django.core.files import File
+from django.http import HttpResponse
 from django.template.loader import select_template
 from xhtml2pdf import pisa
 
-from silver.api.azure_upload_services import function_upload
-from silver.models import Transaction, BillingDocumentBase, Invoice, DocumentEntry
-from silver.utils.pdf import fetch_resources
+from wab.utils.pdf import fetch_resources
 
 logger = logging.getLogger(__name__)
 
 
-class GeneratePDFOfTransaction(object):
-    db = None
+class GeneratePdf(object):
+    data = None
     collection_name = None
-
-    def __init__(self, db, collection_name):
-        self.db = db
+    columns = None
+    def __init__(self, data, collection_name, columns):
+        self.data = data
         self.collection_name = collection_name
+        self.columns = columns
 
     def __get_pdf_filename(self):
         return '{name}_{date}.pdf'.format(
@@ -48,21 +50,24 @@ class GeneratePDFOfTransaction(object):
             return
         return pdf_file_object
 
-    def __upload(self, pdf_file_object, location):
-        # the PDF's upload_path attribute needs to be set before calling this method
-        # pdf_file_object.seek(0, SEEK_SET)
-        # url = function_upload(image=pdf_file_object, location=location, content_type='application/pdf',
-        #                       name=self.__get_pdf_filename())
-        # self.transaction.pdf = url
-        # self.transaction.save()
-        # return self.transaction
-        pass
+    # def __upload(self, pdf_file_object, location):
+    #     pdf_file_object.seek(0, SEEK_SET)
+    #     django_file = File(pdf_file_object)
+    #     with transaction.atomic():
+    #         self.pdf_file.save(filename, django_file, True)
+    #         self.mark_as_clean()
 
     def generate_pdf(self, context):
-        context['db'] = self.db
-        context['collection_name'] = self.collection_name
+        context['data'] = self.data
+        context['columns'] = self.columns
         context['filename'] = self.__get_pdf_filename()
+        context['table_name'] = self.collection_name
         pdf_file_object = self.__generate(template=select_template(['pdf/pdf_document.html']),
                                           context=context)
-        self.__upload(self)
-        return None
+        pdf_file_object.seek(0, SEEK_SET)
+        django_file = File(pdf_file_object)
+        wrapper = FileWrapper(django_file)
+        response = HttpResponse(wrapper, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=' + self.__get_pdf_filename()
+        return response
+        # self.__upload(self)

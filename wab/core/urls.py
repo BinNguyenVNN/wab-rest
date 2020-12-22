@@ -7,7 +7,7 @@ urlpatterns = [
     path("", include("wab.core.custom_column.urls")),
     path("db-provider/", include("wab.core.db_provider.urls")),
     path("sql-function/", include("wab.core.sql_function.urls")),
-    path("export/pdf/<int:connction>/<str:table_name>/", ExportPdfView.as_view(), name="export-pdf"),
-    path("export/excel/<int:connction>/<str:table_name>/", ExportExcelView.as_view(), name="export-excel"),
-    path("export/text/<int:connction>/<str:table_name>/", ExportTextView.as_view(), name="export-text"),
+    path("export/pdf/<int:connection>/<str:table_name>/", ExportPdfView.as_view(), name="export-pdf"),
+    path("export/excel/<int:connection>/<str:table_name>/", ExportExcelView.as_view(), name="export-excel"),
+    path("export/text/<int:connection>/<str:table_name>/", ExportTextView.as_view(), name="export-text"),
 ]
