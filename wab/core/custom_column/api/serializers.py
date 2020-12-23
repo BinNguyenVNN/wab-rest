@@ -18,6 +18,13 @@ class CustomColumnConfigTypeSerializer(serializers.ModelSerializer):
         lookup_field = "id"
 
 
+class UpdateCustomColumnConfigTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomColumnConfigType
+        fields = ["id", "name"]
+        lookup_field = "id"
+
+
 class CustomColumnConfigTypeValidatorSerializer(serializers.ModelSerializer):
     custom_column_config_type = serializers.SerializerMethodField()
     custom_column_config_type_id = serializers.IntegerField(allow_null=True)
