@@ -3,7 +3,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from wab.core.custom_column.api.views import CustomColumnRegexTypeViewSet, CustomColumnTypeViewSet, \
-    CustomColumnConfigTypeViewSet, CustomColumnConfigValidationViewSet, CustomColumnConfigTypeValidatorViewSet
+    CustomColumnConfigTypeViewSet, CustomColumnConfigValidationViewSet, CustomColumnConfigTypeValidatorViewSet, \
+    UpdateCustomColumnConfigTypeView
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -20,10 +21,6 @@ router.register("custom-column-type", CustomColumnTypeViewSet, basename="CustomC
 
 app_name = "custom-column"
 urlpatterns = [
-                  # path('validation-list/<int:custom_column_type_id>', ColumnValidationListView.as_view(),
-                  #      name='ColumnValidationListView'),
-                  # path('validation-create/<int:custom_column_type_id>', ColumnValidationCreateView.as_view(),
-                  #      name='ColumnValidationCreateView'),
-                  # path('validation-update/<int:custom_column_type_id>', ColumnValidationUpdateView.as_view(),
-                  #      name='ColumnValidationUpdateView')
+                  path('update-custom-column-config-type/<int:config_type_id>', UpdateCustomColumnConfigTypeView.as_view(),
+                       name='UpdateCustomColumnConfigTypeView')
               ] + router.urls
