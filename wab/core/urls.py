@@ -11,6 +11,6 @@ urlpatterns = [
     path("export/pdf/<int:connection>/<str:table_name>/", ExportPdfView.as_view(), name="export-pdf"),
     path("export/excel/<int:connection>/<str:table_name>/", ExportExcelView.as_view(), name="export-excel"),
     path("export/text/<int:connection>/<str:table_name>/", ExportTextView.as_view(), name="export-text"),
-    path("import/csv/<int:connection>/", ImportCsvView.as_view(), name="import-csv"),
+    path("import/csv/<int:connection>/<str:table_name>/", ImportCsvView.as_view(), name="import-csv"),
 
 ]
