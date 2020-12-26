@@ -21,10 +21,10 @@ class SqlFunction(BaseModel):
 
 
 class MERGE_TYPE(Enum):
-    inner_join = ('inner_join', 'inner join')
-    left_join = ('left_join', 'left join')
-    right_join = ('right_join', 'right join')
-    right_outer_join = ('right_outer_join', 'right outer join')
+    inner_join = ('inner join', 'inner join')
+    left_join = ('left join', 'left join')
+    right_join = ('right join', 'right join')
+    right_outer_join = ('right outer join', 'right outer join')
     union = ('union', 'union')
 
     @classmethod
@@ -82,8 +82,8 @@ class SqlFunctionCondition(BaseModel):
 
 
 class RELATION(Enum):
-    relation_and = ('relation_and', 'and')
-    relation_or = ('relation_or', 'or')
+    relation_and = ('and', 'and')
+    relation_or = ('or', 'or')
 
     @classmethod
     def get_value(cls, member):
@@ -91,9 +91,9 @@ class RELATION(Enum):
 
 
 class OPERATOR(Enum):
-    type_equal = ('type_equal', '=')
-    type_in = ('type_in', 'in')
-    type_contain = ('type_contain', 'contain')
+    type_equal = ('=', '=')
+    type_in = ('in', 'in')
+    type_contain = ('contain', 'contain')
 
     @classmethod
     def get_value(cls, member):

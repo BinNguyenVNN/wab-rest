@@ -3,7 +3,8 @@ import json
 from bson.json_util import dumps
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, ListAPIView
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
+    DestroyModelMixin
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
@@ -25,7 +26,7 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
 
 
 class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
-                                  GenericViewSet):
+                                  DestroyModelMixin, GenericViewSet):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DBProviderConnectionSerializer
     queryset = DBProviderConnection.objects.all()
@@ -64,7 +65,7 @@ class DBConnectionCreateView(CreateAPIView):
 
 
 class DBConnectionListTableView(ListAPIView):
-    authentication_classes = (token_authentication.JWTAuthenticationBackend, )
+    authentication_classes = (token_authentication.JWTAuthenticationBackend,)
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
