@@ -6,6 +6,7 @@ from wab.core.import_database.views import ImportCsvView
 urlpatterns = [
     path("users/", include("wab.core.users.urls")),
     path("", include("wab.core.custom_column.urls")),
+    path("", include("wab.core.custom_column_fk.urls")),
     path("db-provider/", include("wab.core.db_provider.urls")),
     path("sql-function/", include("wab.core.sql_function.urls")),
     path("export/pdf/<int:connection>/<str:table_name>/", ExportPdfView.as_view(), name="export-pdf"),

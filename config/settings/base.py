@@ -98,6 +98,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "wab.core.users.apps.UsersConfig",
     "wab.core.custom_column.apps.CustomColumnTypeConfig",
+    "wab.core.custom_column_fk.apps.CustomColumnFK",
     "wab.core.db_provider.apps.DbProviderConfig",
     "wab.core.sql_function.apps.SqlFunctionConfig",
     # "wab.core.emails.apps.EmailsConfig",
