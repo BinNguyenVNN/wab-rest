@@ -21,13 +21,13 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
     queryset = DbProvider.objects.all()
     lookup_field = "id"
 
+    def get_queryset(self, *args, **kwargs):
+        return self.queryset.all()
+
     def destroy(self, request, args, *kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
-
-    def get_queryset(self, *args, **kwargs):
-        return self.queryset.all()
+        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider')
 
 
 class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
@@ -39,6 +39,11 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
+
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
 
 
 class DBConnectionCreateView(CreateAPIView):
