@@ -21,6 +21,11 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
     queryset = DbProvider.objects.all()
     lookup_field = "id"
 
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
+
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
