@@ -35,6 +35,11 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
+
 
 class DBConnectionCreateView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
@@ -43,6 +48,8 @@ class DBConnectionCreateView(CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
+        data.update({'creator': request.user.id})
+        data.update({'last_modified_by': request.user.id})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(raise_exception=True):
             provider = self.queryset.filter(id=data.get('provider')).first()

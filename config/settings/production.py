@@ -200,6 +200,6 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-WAB_FE = 'http://174.138.18.130/'
+WAB_FE = 'https://app.persei.io/'
 WAB_API = 'https://persei.risotech.vn/'
 PASSWORD_RESET_TIMEOUT_DAYS = 1
