@@ -7,6 +7,8 @@ from pathlib import Path
 
 import environ
 
+from config.settings.git import IS_PROD
+
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # wab/
@@ -22,7 +24,10 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
-IS_LOCAL_DEV = True
+if IS_PROD:
+    IS_LOCAL_DEV = False
+else:
+    IS_LOCAL_DEV = True
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
