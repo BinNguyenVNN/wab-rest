@@ -11,7 +11,6 @@ User = get_user_model()
 
 
 class UserMiniSerializer(ModelSerializer):
-
     class Meta:
         model = User
         fields = ['id', 'name', ]
@@ -94,7 +93,7 @@ class Base64ImageField(CharField):
             # Get the file name extension:
             file_extension = self.get_file_extension(file_name, decoded_file)
             if file_extension is not None:
-                complete_file_name = "%s.%s" % (file_name, file_extension, )
+                complete_file_name = "%s.%s" % (file_name, file_extension,)
 
                 _file = ContentFile(decoded_file, name=complete_file_name)
                 data = default_storage.save(complete_file_name, _file)

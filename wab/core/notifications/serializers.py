@@ -1,5 +1,6 @@
-from wab.core.notifications.models import Channel, NotifyUser, Subscribe, Notifications
 from rest_framework import serializers
+
+from wab.core.notifications.models import Channel, NotifyUser, Subscribe, Notifications
 
 
 class ChanelSerializer(serializers.ModelSerializer):

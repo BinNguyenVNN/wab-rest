@@ -1,5 +1,7 @@
 from enum import Enum
+
 from django.db import models
+
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
 

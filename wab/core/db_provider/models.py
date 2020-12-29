@@ -5,6 +5,7 @@ from wab.core.models import BaseModel
 
 class DbProvider(BaseModel):
     name = models.CharField(null=True, blank=True, max_length=255)
+
     # prefix = models.CharField(null=True, blank=True, max_length=128)
 
     def __str__(self):

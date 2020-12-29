@@ -1,5 +1,3 @@
-import json
-
 from wab.core.notifications.models import PUSH_NOTIFICATION, NOTIFY, POPUP
 
 

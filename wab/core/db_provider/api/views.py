@@ -5,8 +5,9 @@ from rest_framework import status
 from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
+
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
 from wab.core.db_provider.models import DbProvider, DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
@@ -15,7 +16,7 @@ from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
 
 
-class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
+class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet, DestroyModelMixin):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DbProviderSerializer
     queryset = DbProvider.objects.all()
@@ -24,7 +25,7 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider')
@@ -66,7 +67,8 @@ class DBConnectionCreateView(CreateAPIView):
                                                            username=result.username, password=result.password,
                                                            database=result.database, ssl=result.ssl)
                     # data = mongo_db_manager.get_all_collections(db=db)
-                    return responses.ok(data="Connect success", method=constant.POST, entity_name='db_provider_connection')
+                    return responses.ok(data="Connect success", method=constant.POST,
+                                        entity_name='db_provider_connection')
                 else:
                     # TODO: implement another phase
                     pass

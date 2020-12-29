@@ -1,6 +1,7 @@
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
 from rest_framework.viewsets import GenericViewSet
+
 from wab.core.custom_column_fk.api.serializers import CustomColumnFKSerializer
 from wab.core.custom_column_fk.models import CustomColumnFK
 

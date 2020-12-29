@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from wab.core.users.models import User, KeyModel
 
 

@@ -21,6 +21,7 @@ router.register("custom-column-type", CustomColumnTypeViewSet, basename="CustomC
 
 app_name = "custom-column"
 urlpatterns = [
-                  path('update-custom-column-config-type/<int:config_type_id>', UpdateCustomColumnConfigTypeView.as_view(),
+                  path('update-custom-column-config-type/<int:config_type_id>',
+                       UpdateCustomColumnConfigTypeView.as_view(),
                        name='UpdateCustomColumnConfigTypeView')
               ] + router.urls

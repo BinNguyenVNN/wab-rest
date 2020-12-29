@@ -10,4 +10,3 @@ class ImportCsvSerializer(serializers.Serializer):
 
     table_name = serializers.CharField()
     is_existed = serializers.BooleanField()
-

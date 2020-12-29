@@ -10,7 +10,6 @@ from django.db.models import (
 )
 from django.utils.translation import gettext_lazy as _
 
-
 __all__ = ['JSONField']
 
 
@@ -18,6 +17,7 @@ class JsonAdapter(Json):
     """
     Customized psycopg2.extras.Json to allow for a custom encoder.
     """
+
     def __init__(self, adapted, dumps=None, encoder=None):
         self.encoder = encoder
         super().__init__(adapted, dumps=dumps)
@@ -99,7 +99,7 @@ class KeyTransform(Transform):
         super().__init__(*args, **kwargs)
         self.key_name = key_name
 
-    def as_sql(self, compiler, connection):
+    def as_sql(self, compiler, connection, **kwargs):
         key_transforms = [self.key_name]
         previous = self.lhs
         while isinstance(previous, KeyTransform):
@@ -129,6 +129,7 @@ class KeyTransformTextLookupMixin:
     key lookup. Make use of the ->> operator instead of casting key values to
     text and performing the lookup on the resulting representation.
     """
+
     def __init__(self, key_transform, *args, **kwargs):
         assert isinstance(key_transform, KeyTransform)
         key_text_transform = KeyTextTransform(
