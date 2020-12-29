@@ -45,11 +45,6 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
 
-    def destroy(self, request, args, *kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
-
 
 class DBConnectionCreateView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]

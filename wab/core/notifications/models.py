@@ -66,6 +66,7 @@ class Subscribe(models.Model):
     class Meta:
         db_table = 'notify_subscribe'
 
+
 CODE_STATUS_CHOICES = (
     (INIT, _('init')),
     (SENDING, _('sending')),
@@ -91,8 +92,3 @@ class Notifications(models.Model):
 
     class Meta:
         db_table = 'notifications'
-
-
-
-
-
