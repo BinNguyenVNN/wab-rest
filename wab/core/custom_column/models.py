@@ -69,6 +69,7 @@ class CustomColumnType(BaseModel):
     is_key = models.BooleanField(default=True)
     custom_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
                                                   blank=True)
+    slug = models.CharField(null=True, blank=True, max_length=255)
 
     def __str__(self):
         return self.name
