@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 import environ
-
 from config.settings.git import IS_PROD
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
@@ -387,3 +386,13 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+
+if __name__ == "__main__":
+    import base64
+
+    aa = base64.b64encode(bytes('data to be encoded', "utf-8"))
+    print(aa.decode("utf-8"))
+
+    bb = base64.b64decode(aa)
+    print(bb.decode("utf-8"))

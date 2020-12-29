@@ -33,7 +33,7 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
     lookup_field = "id"
 
     def get_queryset(self, *args, **kwargs):
-        return self.queryset.all()
+        return self.queryset.all(creator=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -60,8 +60,8 @@ class DBConnectionCreateView(CreateAPIView):
                     db = mongo_db_manager.connection_mongo(host=result.host, port=result.port,
                                                            username=result.username, password=result.password,
                                                            database=result.database, ssl=result.ssl)
-                    data = mongo_db_manager.get_all_collections(db=db)
-                    return responses.ok(data=data, method=constant.POST, entity_name='db_provider_connection')
+                    # data = mongo_db_manager.get_all_collections(db=db)
+                    return responses.ok(data="Connect success", method=constant.POST, entity_name='db_provider_connection')
                 else:
                     # TODO: implement another phase
                     pass
