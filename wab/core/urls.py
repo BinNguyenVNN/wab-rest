@@ -14,5 +14,6 @@ urlpatterns = [
     path("export/text/<int:connection>/<str:table_name>/", ExportTextView.as_view(), name="export-text"),
     path("import/csv/<int:connection>/<str:table_name>/", ImportCsvView.as_view(), name="import-csv"),
     path("notifications/", include("wab.core.notifications.urls")),
+    path("sharing-files/", include("wab.core.sharing_files.urls")),
 
 ]
