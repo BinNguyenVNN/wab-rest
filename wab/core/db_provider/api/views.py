@@ -31,7 +31,7 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet, Destro
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider')
 
 
-class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
+class DBProviderConnectionViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                   DestroyModelMixin, GenericViewSet):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DBProviderConnectionSerializer
@@ -60,18 +60,22 @@ class DBConnectionCreateView(CreateAPIView):
         if serializer.is_valid(raise_exception=True):
             provider = self.queryset.filter(id=data.get('provider')).first()
             if provider:
-                result = serializer.save()
-                if provider.name == MONGO:
-                    mongo_db_manager = MongoDBManager()
-                    db = mongo_db_manager.connection_mongo(host=result.host, port=result.port,
-                                                           username=result.username, password=result.password,
-                                                           database=result.database, ssl=result.ssl)
-                    # data = mongo_db_manager.get_all_collections(db=db)
-                    return responses.ok(data="Connect success", method=constant.POST,
-                                        entity_name='db_provider_connection')
-                else:
-                    # TODO: implement another phase
-                    pass
+                try:
+                    if provider.name == MONGO:
+                        mongo_db_manager = MongoDBManager()
+                        db = mongo_db_manager.connection_mongo(host=data.get('host'), port=data.get('port'),
+                                                               username=data.get('username'),
+                                                               password=data.get('password'),
+                                                               database=data.get('database'), ssl=data.get('ssl'))
+                        mongo_db_manager.get_all_collections(db=db)
+                        serializer.save()
+                        return responses.ok(data="Connect success", method=constant.POST,
+                                            entity_name='db_provider_connection')
+                    else:
+                        # TODO: implement another phase
+                        pass
+                except Exception as err:
+                    return responses.bad_request(data=str(err), message_code='CONNECT_ERROR')
             else:
                 return responses.bad_request(data='Provider not found', message_code='PROVIDER_NOT_FOUND')
         else:
