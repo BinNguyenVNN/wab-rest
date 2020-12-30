@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView
+from rest_framework.generics import UpdateAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
 from rest_framework.permissions import AllowAny
@@ -22,6 +22,11 @@ class CustomColumnRegexTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListMod
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_regex_type')
+
 
 class CustomColumnConfigTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                     DestroyModelMixin, GenericViewSet):
@@ -31,6 +36,11 @@ class CustomColumnConfigTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListMo
 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
+
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type')
 
 
 class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
@@ -42,6 +52,11 @@ class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMix
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type')
+
 
 class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                           DestroyModelMixin, GenericViewSet):
@@ -52,6 +67,11 @@ class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_validation')
+
 
 class CustomColumnConfigTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                              DestroyModelMixin, GenericViewSet):
@@ -61,6 +81,11 @@ class CustomColumnConfigTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixi
 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
+
+    def destroy(self, request, args, *kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type_validator')
 
 
 class UpdateCustomColumnConfigTypeView(UpdateAPIView):

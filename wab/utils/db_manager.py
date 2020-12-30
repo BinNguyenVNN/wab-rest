@@ -1,8 +1,9 @@
+import datetime
 import urllib.parse
+
+import bson.objectid
 import pymongo
 from pymongo import MongoClient
-import datetime
-import bson.objectid
 
 from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, OPERATOR, RELATION
 from wab.utils import responses
@@ -39,21 +40,24 @@ class MongoDBManager(object):
         if host in self.hosts.keys() and database in self.databases.keys():
             return self.hosts[host]
         else:
-            us = urllib.parse.quote_plus(username)
-            pw = urllib.parse.quote_plus(password)
-            str_ssl = 'false'
-            if ssl:
-                str_ssl = 'true'
-            if port <= 0:
-                prefix = MONGO_SRV_CONNECTION
-                client = MongoClient('%s://%s:%s@%s/?ssl=%s' % (prefix, us, pw, host, str_ssl))
-            else:
-                prefix = MONGO_CONNECTION
-                client = MongoClient('%s://%s:%s@%s:%s/?ssl=%s' % (prefix, us, pw, host, str(port), str_ssl))
-            db = client[database]
-            self.hosts[host] = db
-            self.databases[database] = database
-        return db
+            try:
+                us = urllib.parse.quote_plus(username)
+                pw = urllib.parse.quote_plus(password)
+                str_ssl = 'false'
+                if ssl:
+                    str_ssl = 'true'
+                if port <= 0:
+                    prefix = MONGO_SRV_CONNECTION
+                    client = MongoClient('%s://%s:%s@%s/?ssl=%s' % (prefix, us, pw, host, str_ssl))
+                else:
+                    prefix = MONGO_CONNECTION
+                    client = MongoClient('%s://%s:%s@%s:%s/?ssl=%s' % (prefix, us, pw, host, str(port), str_ssl))
+                db = client[database]
+                self.hosts[host] = db
+                self.databases[database] = database
+                return db
+            except Exception as err:
+                raise Exception(err)
 
     def connection_mongo_by_provider(self, provider_connection=None):
         return self.connection_mongo(host=provider_connection.host,
@@ -64,8 +68,11 @@ class MongoDBManager(object):
                                      ssl=provider_connection.ssl)
 
     def get_all_collections(self, db):
-        collections = db.list_collection_names()
-        return collections
+        try:
+            collections = db.list_collection_names()
+            return collections
+        except Exception as err:
+            raise Exception(err)
 
     def get_all_documents(self, db, collection, column_sort, page=1, page_size=20, sort=pymongo.DESCENDING):
         if column_sort:

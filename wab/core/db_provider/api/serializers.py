@@ -13,5 +13,5 @@ class DbProviderSerializer(serializers.ModelSerializer):
 class DBProviderConnectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DBProviderConnection
-        fields = ["id", "name", "host", "port", "username", "password", "provider", "ssl", "database"]
+        fields = '__all__'
         lookup_field = "id"

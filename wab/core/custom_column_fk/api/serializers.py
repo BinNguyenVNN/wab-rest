@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from wab.core.custom_column_fk.models import CustomColumnFK
 from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
 
@@ -20,4 +21,3 @@ class CustomColumnFKSerializer(serializers.ModelSerializer):
         model = CustomColumnFK
         fields = '__all__'
         lookup_field = "id"
-

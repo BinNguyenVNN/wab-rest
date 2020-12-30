@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import environ
+from config.settings.git import IS_PROD
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,7 +23,10 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
-IS_LOCAL_DEV = False
+if IS_PROD:
+    IS_LOCAL_DEV = False
+else:
+    IS_LOCAL_DEV = True
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -101,6 +105,7 @@ LOCAL_APPS = [
     "wab.core.custom_column_fk.apps.CustomColumnFK",
     "wab.core.db_provider.apps.DbProviderConfig",
     "wab.core.sql_function.apps.SqlFunctionConfig",
+    "wab.core.notifications.apps.NotificationsConfig"
     # "wab.core.emails.apps.EmailsConfig",
     # Your stuff: custom apps go here
 ]
@@ -381,3 +386,13 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+
+if __name__ == "__main__":
+    import base64
+
+    aa = base64.b64encode(bytes('data to be encoded', "utf-8"))
+    print(aa.decode("utf-8"))
+
+    bb = base64.b64decode(aa)
+    print(bb.decode("utf-8"))
