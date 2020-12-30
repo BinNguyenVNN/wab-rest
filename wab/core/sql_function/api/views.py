@@ -222,7 +222,16 @@ class SqlJoinViewTest(ListAPIView):
                             "as": "data",
                         },
                     },
-                    # {"$unwind": "$data"},
+                    {
+                        "$unwind": {
+                            "path": "$data",
+                            "preserveNullAndEmptyArrays": False
+                        }
+                    },
+                    # {"$group": {
+                    #     "_id": "$_id",
+                    #     "data": {"$push": "$data"},
+                    # }},
                     # {"$match": {
                     #     "$and": [
                     #         {"order_id": "a548910a1c6147796b98fdf73dbeba33"},
@@ -230,10 +239,11 @@ class SqlJoinViewTest(ListAPIView):
                     #     ]}},
                     {"$sort": {"order_id": -1}},
                     {
-                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
                     },
                     {
-                        "$project": {"data": 0, "_id": 0}}
+                        "$project": {"data": 0, "_id": 0}
+                    }
 
                 ]
                 c = collection.aggregate(pipeline)
