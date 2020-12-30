@@ -101,6 +101,14 @@ class MongoDBManager(object):
         collection.insert(list_data)
 
     @staticmethod
+    def find_by_fk(db, table, column, condition, value):
+        db[table].find({
+            column: {
+                '$' + condition: value
+            }
+        })
+
+    @staticmethod
     def union(db, table_1, field_1, table_2, field_2, condition_items, order_by):
         if order_by is None:
             order_by = field_1
@@ -251,7 +259,7 @@ class MongoDBManager(object):
                     "as": "data"
                 },
             },
-            # {"$unwind": "$data"},
+            {"$unwind": "$data"},
             {
                 "$match": {
                     "$and": list_match_and,
@@ -260,7 +268,84 @@ class MongoDBManager(object):
             },
             {"$sort": {order_by: -1}},
             {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+            },
+            {
+                "$project": {"data": 0, "_id": 0}
+            }
+        ]
+        return collection.aggregate(pipeline)
+
+    @staticmethod
+    def inner_join(db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+        if order_by is None:
+            order_by = field_1
+        collection = db[table_1]
+        list_match_and = []
+        list_match_or = []
+        for condition in condition_items:
+            if condition.table_name == table_1:
+                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_and.append(item)
+                else:
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_or.append(item)
+            else:
+                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {"data." + condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_in'):
+                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_and.append(item)
+                else:
+                    if condition.operator == OPERATOR.get_value('type_equal'):
+                        item = {"data." + condition.field_name: {"$eq": condition.value}}
+                    elif condition.operator == OPERATOR.get_value('type_in'):
+                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
+                    else:
+                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
+                    list_match_or.append(item)
+
+        pipeline = [
+            {"$skip": page},
+            {"$limit": page_size},
+            {
+                "$lookup": {
+                    "from": table_2,
+                    "localField": field_1,
+                    "foreignField": field_2,
+                    "as": "data"
+                },
+            },
+            {
+                "$unwind":
+                    {
+                        "path": "$data",
+                        "preserveNullAndEmptyArrays": False
+                    }
+            },
+            {
+                "$match": {
+                    "$and": list_match_and,
+                    "$or": list_match_or
+                }
+            },
+            {"$sort": {order_by: -1}},
+            {
+                "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
             },
             {
                 "$project": {"data": 0, "_id": 0}
