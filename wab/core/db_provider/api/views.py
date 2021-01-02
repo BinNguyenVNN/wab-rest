@@ -39,7 +39,7 @@ class DBProviderConnectionViewSet(RetrieveModelMixin, ListModelMixin, UpdateMode
     lookup_field = "id"
 
     def get_queryset(self, *args, **kwargs):
-        return self.queryset.all(creator=self.request.user)
+        return self.queryset.filter(creator=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
