@@ -31,7 +31,7 @@ class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet, Destro
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider')
 
 
-class DBProviderConnectionViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
+class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                   DestroyModelMixin, GenericViewSet):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DBProviderConnectionSerializer
@@ -68,7 +68,7 @@ class DBConnectionCreateView(CreateAPIView):
                                                                password=data.get('password'),
                                                                database=data.get('database'), ssl=data.get('ssl'))
                         mongo_db_manager.get_all_collections(db=db)
-                        serializer.save()
+                        # serializer.save()
                         return responses.ok(data="Connect success", method=constant.POST,
                                             entity_name='db_provider_connection')
                     else:
