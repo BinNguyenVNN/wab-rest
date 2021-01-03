@@ -7,7 +7,7 @@ from datetime import timedelta
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
-app = Celery("wab", include=["wab.core.notifications.tasks"])
+app = Celery("wab", include=["wab.core.notifications.tasks", "wab.core.import_database.tasks"])
 
 app.conf.update(
     CELERY_TASK_SERIALIZER='json',
@@ -19,6 +19,10 @@ app.conf.update(
         'push_notification': {
             'task': 'wab.core.notifications.tasks.push_notification',
             'schedule': timedelta(seconds=30),
+        },
+        'import_database': {
+            'task': 'wab.core.import_database.tasks.process_import_database',
+            'schedule': timedelta(seconds=5),
         }
     }
 )

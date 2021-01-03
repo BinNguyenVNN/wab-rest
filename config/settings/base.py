@@ -105,7 +105,8 @@ LOCAL_APPS = [
     "wab.core.custom_column_fk.apps.CustomColumnFK",
     "wab.core.db_provider.apps.DbProviderConfig",
     "wab.core.sql_function.apps.SqlFunctionConfig",
-    "wab.core.notifications.apps.NotificationsConfig"
+    "wab.core.notifications.apps.NotificationsConfig",
+    "wab.core.import_database.apps.ImportDatabaseConfig"
     # "wab.core.emails.apps.EmailsConfig",
     # Your stuff: custom apps go here
 ]

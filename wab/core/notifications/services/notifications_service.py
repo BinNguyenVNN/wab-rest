@@ -106,7 +106,7 @@ class NotificationsService(object):
                 body=payload.get("body"),
                 data=data,
             )
-            notify.user = list_user_notify
+            notify.user.set(list_user_notify)
             notify.save()
 
         elif topic == Topic.PUSH_BROADCAST_NOTIFICATION:
@@ -118,7 +118,7 @@ class NotificationsService(object):
                 data=data,
             )
 
-        self.push_notification_firebase()
+        # self.push_notification_firebase()
 
         return True
 

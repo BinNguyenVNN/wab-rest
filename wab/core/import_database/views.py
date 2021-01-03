@@ -7,6 +7,8 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
+from wab.core.import_database.models import ImportData
+from wab.core.import_database.tasks import process_import_database
 from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses
 from wab.utils.constant import MONGO
@@ -52,19 +54,27 @@ class ImportCsvView(CreateAPIView):
 
                 for row in csv_data:
                     data = dict(row)
-                    data["_id"] = ObjectId()
+                    # data["_id"] = str(ObjectId())
                     list_insert.append(data)
 
                 print(list_insert)
-                insert = table.insert_many(list_insert)
-                response_id = []
-                for ids in insert.inserted_ids:
-                    response_id.append(str(ids))
+                # insert = table.insert_many(list_insert)
+                # response_id = []
+                # for ids in insert.inserted_ids:
+                #     response_id.append(str(ids))
 
-                print(response_id)
+                # print(response_id)
+                ImportData.objects.create(
+                    provider_connection_id=connection.id,
+                    username='test_user',
+                    table=table_name,
+                    record=list_insert
+                )
 
-                return responses.ok(data=response_id, method='post', entity_name='import_database')
+                return responses.ok(data="waiting import data", method='post', entity_name='import_database')
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
 
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
+
+

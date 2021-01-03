@@ -17,16 +17,14 @@ class GFireBase:
         subscriptions = Subscribe.objects.filter(
             user__username__in=list_username,
             channel_id=message.channel.id,
-            active=True,
-            contact__isnull=False).exclude(contact__exact='') \
-            .values_list('contact', flat=True)
+            active=True).values_list('contact', flat=True)
 
-        subscriptions = list(subscriptions)
+        list_contact = []
+        for contacts in subscriptions:
+            for contact in contacts:
+                list_contact.append(contact)
+        subscriptions = list(list_contact)
         valid_registration_ids = self.push_service.clean_registration_ids(subscriptions)
-        Subscribe.objects.filter(
-            user__username__in=list_username,
-            channel_id=message.channel.id, active=True) \
-            .exclude(contact__in=set(valid_registration_ids)).delete()
         image = message.data.get('image')
         click_url = message.data.get('url')
 
