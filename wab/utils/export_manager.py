@@ -19,6 +19,7 @@ class GeneratePdf(object):
     data = None
     collection_name = None
     columns = None
+
     def __init__(self, data, collection_name, columns):
         self.data = data
         self.collection_name = collection_name

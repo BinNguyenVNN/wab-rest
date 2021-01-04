@@ -18,8 +18,8 @@ def process_import_database():
             table_name = data.table
             connection = DBProviderConnection.objects.filter(id=data.provider_connection.id).first()
             mongo_db_manager = MongoDBManager()
-            db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
-            collections = mongo_db_manager.get_all_collections(db=db)
+            db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+            collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
             if table_name not in collections:
                 # table_name ko tồn tại, pass
                 continue

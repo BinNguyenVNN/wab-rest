@@ -23,9 +23,9 @@ class ExportPdfView(ListAPIView):
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
-        start = request.GET.get('start', None)
-        end = request.GET.get('end', None)
         table_name = kwargs.get('table_name', None)
+        list_filter = kwargs.get('list_filter', None)
+        list_column = kwargs.get('list_column', None)
         connection_id = kwargs.get('connection', None)
         provider_connection = self.queryset.get(id=connection_id)
         provider = provider_connection.provider
@@ -36,9 +36,12 @@ class ExportPdfView(ListAPIView):
                     try:
                         db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                         columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
-                        documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
-                                                                              column_sort=None,
-                                                                              sort=None, page=1, page_size=20)
+                        # documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
+                        #                                                       column_sort=None,
+                        #                                                       sort=None, page=1, page_size=20)
+                        documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
+                                                                         list_filter=list_filter,
+                                                                         list_column=list_column)
                         data = list(documents)
                         result = json.loads(dumps(data))
                         # final_data = []
