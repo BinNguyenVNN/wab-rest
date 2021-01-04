@@ -3,7 +3,6 @@ from io import StringIO
 
 from rest_framework.generics import CreateAPIView
 from rest_framework.parsers import FileUploadParser
-from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.import_database.models import ImportData
@@ -15,7 +14,6 @@ from wab.utils.db_manager import MongoDBManager
 
 class ImportCsvView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SwaggerSerializer
     parser_class = (FileUploadParser,)
 

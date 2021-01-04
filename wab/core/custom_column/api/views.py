@@ -22,7 +22,7 @@ class CustomColumnRegexTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListMod
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_regex_type')
@@ -37,7 +37,7 @@ class CustomColumnConfigTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListMo
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type')
@@ -52,7 +52,7 @@ class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMix
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type')
@@ -67,7 +67,7 @@ class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_validation')
@@ -82,7 +82,7 @@ class CustomColumnConfigTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixi
     def get_queryset(self, *args, **kwargs):
         return self.queryset.all()
 
-    def destroy(self, request, args, *kwargs):
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type_validator')
