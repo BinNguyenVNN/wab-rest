@@ -17,7 +17,6 @@ from wab.utils.db_manager import MongoDBManager
 
 class SqlFunctionListView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
 
     def get(self, request, *args, **kwargs):
@@ -31,7 +30,6 @@ class SqlFunctionListView(ListAPIView):
 
 class SqlFunctionCreateView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
 
     @transaction.atomic()
@@ -91,7 +89,6 @@ class SqlFunctionCreateView(CreateAPIView):
 
 class SqlFunctionUpdateView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SqlFunctionSerializer
     queryset = SqlFunction.objects.all()
 
@@ -151,7 +148,6 @@ class SqlFunctionUpdateView(UpdateAPIView):
 
 class SqlFunctionDeleteView(DestroyAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SwaggerSerializer
     queryset = SqlFunction.objects.all()
 

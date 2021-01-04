@@ -2,9 +2,9 @@ import base64
 import json
 
 from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
+from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
@@ -12,7 +12,7 @@ from wab.utils.db_manager import MongoDBManager
 
 class SharingFilesGetLinkView(RetrieveAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         connection_id = kwargs.get("connection_id")
@@ -27,8 +27,8 @@ class SharingFilesGetLinkView(RetrieveAPIView):
 
 class SharingFilesGetDataView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
         sharing_key_encode = kwargs.get("sharing_key")

@@ -41,6 +41,17 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
     def get_queryset(self, *args, **kwargs):
         return self.queryset.filter(creator=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        data.update({'creator': request.user.id})
+        data.update({'last_modified_by': request.user.id})
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # headers = self.get_success_headers(serializer.data)
+        return responses.ok(data=serializer.data, method=constant.POST,
+                            entity_name='db_provider_connection')
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -54,8 +65,8 @@ class DBConnectionCreateView(CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
-        data.update({'creator': request.user.id})
-        data.update({'last_modified_by': request.user.id})
+        # data.update({'creator': request.user.id})
+        # data.update({'last_modified_by': request.user.id})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(raise_exception=True):
             provider = self.queryset.filter(id=data.get('provider')).first()
