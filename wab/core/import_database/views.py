@@ -1,14 +1,12 @@
 import csv
 from io import StringIO
 
-from bson import ObjectId
 from rest_framework.generics import CreateAPIView
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.import_database.models import ImportData
-from wab.core.import_database.tasks import process_import_database
 from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses
 from wab.utils.constant import MONGO
@@ -76,5 +74,3 @@ class ImportCsvView(CreateAPIView):
 
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
-
-
