@@ -65,8 +65,8 @@ class DBConnectionCreateView(CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         data = request.data
-        data.update({'creator': request.user.id})
-        data.update({'last_modified_by': request.user.id})
+        # data.update({'creator': request.user.id})
+        # data.update({'last_modified_by': request.user.id})
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(raise_exception=True):
             provider = self.queryset.filter(id=data.get('provider')).first()

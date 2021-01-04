@@ -14,7 +14,7 @@ router.register("db-provider", DbProviderViewSet, basename="DbProviderViewSet")
 router.register("connection", DBProviderConnectionViewSet, basename="DBProviderConnectionViewSet")
 # app_name = "db-provider"
 urlpatterns = [
-                  path('connection/create', DBConnectionCreateView.as_view(),
+                  path('connection/connect/', DBConnectionCreateView.as_view(),
                        name='DBConnectionCreateView'),
                   path('connection/tables/<int:pk>/', DBConnectionListTableView.as_view(),
                        name='DBConnectionCreateView'),
