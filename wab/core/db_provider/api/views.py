@@ -14,6 +14,7 @@ from wab.core.serializers import SwaggerSerializer
 from wab.utils import responses, constant, token_authentication
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
+from wab.utils.paginations import ResultsSetPagination
 
 
 class DbProviderViewSet(CreateModelMixin, ListModelMixin, GenericViewSet, DestroyModelMixin):
@@ -35,11 +36,20 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
                                   DestroyModelMixin, GenericViewSet):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = DBProviderConnectionSerializer
+    pagination_class = ResultsSetPagination
     queryset = DBProviderConnection.objects.all()
     lookup_field = "id"
 
     def get_queryset(self, *args, **kwargs):
         return self.queryset.filter(creator=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        data_response = self.get_paginated_response(serializer.data)
+        return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
+                                method=constant.GET, entity_name='db_provider_connection')
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -58,7 +68,7 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
 
 
-class DBConnectionCreateView(CreateAPIView):
+class DBConnectionConnectView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     queryset = DbProvider.objects.all()
     serializer_class = DBProviderConnectionSerializer

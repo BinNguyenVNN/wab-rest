@@ -33,7 +33,7 @@ class ImportCsvView(CreateAPIView):
                 collections = mongo_db_manager.get_all_collections(db=db)
                 if table_name not in collections:
                     return responses.bad_request(data=None, message_code="Table name is not exists")
-                table = db[table_name]
+                # table = db[table_name]
                 list_insert = []
 
                 headers = list(csv_data.fieldnames)
@@ -45,8 +45,8 @@ class ImportCsvView(CreateAPIView):
                                 data=f"Column '{header}' is not exists in table {table_name}",
                                 message_code="Column is not exists")
 
-                except:
-                    return responses.bad_request(data=None, message_code="Table name is not exists")
+                except Exception as err:
+                    return responses.bad_request(data=str(err), message_code="Table name is not exists")
 
                 for row in csv_data:
                     data = dict(row)

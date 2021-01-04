@@ -11,7 +11,6 @@ from wab.utils import responses, constant, token_authentication
 
 class PushSingleNotificationsViews(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = NotificationsSerializer
 
     def post(self, request, **kwargs):
@@ -25,7 +24,6 @@ class PushSingleNotificationsViews(CreateAPIView):
 
 class PushBroadcastNotificationsViews(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = NotificationsSerializer
 
     def post(self, request, **kwargs):
@@ -37,7 +35,6 @@ class PushBroadcastNotificationsViews(CreateAPIView):
 
 class RegisterTokenIdView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = NotificationsSerializer
 
     def post(self, request, **kwargs):
@@ -100,7 +97,6 @@ class RegisterTokenIdView(CreateAPIView):
 
 class CheckRegisterTokenIdView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = NotificationsSerializer
 
     def post(self, request, **kwargs):

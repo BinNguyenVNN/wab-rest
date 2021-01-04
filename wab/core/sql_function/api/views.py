@@ -80,9 +80,8 @@ class SqlFunctionCreateView(CreateAPIView):
 
                 return responses.ok(data=serializer_sql_function.data, method=constant.POST, entity_name='sql-function')
             except Exception as err:
-                return responses.bad_request(data=None,
-                                             message_code='CREATE_SQL_FUNCTION_HAS_ERROR',
-                                             message_system=err)
+                return responses.bad_request(data=str(err),
+                                             message_code='CREATE_SQL_FUNCTION_HAS_ERROR')
         else:
             return responses.bad_request(data=None, message_code='CREATE_SQL_FUNCTION_INVALID')
 
@@ -101,7 +100,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
         sql_function_order_by_id = data.get("sql_function_order_by_id")
         order_by_name = data.get("order_by_name")
         sql_function_merges = data.get("sql_function_merges")
-        sql_function_condition_id = data.get("sql_function_condition_id")
+        # sql_function_condition_id = data.get("sql_function_condition_id")
         sql_function_condition_items = data.get("sql_function_condition_items")
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
@@ -140,8 +139,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
                     sql_function_condition_item.save()
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
-                return responses.bad_request(data=None, message_code='UPDATE_SQL_FUNCTION_HAS_ERROR',
-                                             message_system=err)
+                return responses.bad_request(data=str(err), message_code='UPDATE_SQL_FUNCTION_HAS_ERROR')
         else:
             return responses.bad_request(data=None, message_code='UPDATE_SQL_FUNCTION_INVALID')
 
@@ -188,8 +186,7 @@ class SqlFunctionDeleteView(DestroyAPIView):
 
             return responses.ok(data=None, method=constant.DELETE, entity_name='sql-function')
         except Exception as err:
-            return responses.bad_request(data=None, message_code='DELETE_SQL_FUNCTION_HAS_ERROR',
-                                         message_system=err)
+            return responses.bad_request(data=str(err), message_code='DELETE_SQL_FUNCTION_HAS_ERROR')
 
 
 class SqlJoinViewTest(ListAPIView):
@@ -198,7 +195,7 @@ class SqlJoinViewTest(ListAPIView):
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         provider_connection = self.queryset.get(id=1)
         provider = provider_connection.provider
         if provider:
@@ -254,7 +251,7 @@ class SqlUnionViewTest(ListAPIView):
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         provider_connection = self.queryset.get(id=1)
         provider = provider_connection.provider
         if provider:

@@ -388,12 +388,16 @@ SWAGGER_SETTINGS = {
     },
 }
 
+# TODO: PhuongTN Settings paging
+PAGE_SIZE = 15
+MAX_PAGE_SIZE = 100
 
-if __name__ == "__main__":
-    import base64
 
-    aa = base64.b64encode(bytes('data to be encoded', "utf-8"))
-    print(aa.decode("utf-8"))
-
-    bb = base64.b64decode(aa)
-    print(bb.decode("utf-8"))
+# if __name__ == "__main__":
+#     import base64
+#
+#     aa = base64.b64encode(bytes('data to be encoded', "utf-8"))
+#     print(aa.decode("utf-8"))
+#
+#     bb = base64.b64decode(aa)
+#     print(bb.decode("utf-8"))

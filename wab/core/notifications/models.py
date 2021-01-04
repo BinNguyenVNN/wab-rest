@@ -78,7 +78,7 @@ CODE_STATUS_CHOICES = (
 
 
 class Notifications(models.Model):
-    user = models.ManyToManyField(NotifyUser, blank=True, null=True)
+    user = models.ManyToManyField(NotifyUser, blank=True)
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(max_length=64, choices=CODE_STATUS_CHOICES, default=INIT)
     title = models.CharField(max_length=512, blank=True, null=True)
