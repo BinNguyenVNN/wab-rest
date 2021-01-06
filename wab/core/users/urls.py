@@ -13,6 +13,5 @@ router.register("", UserViewSet)
 
 app_name = "users"
 urlpatterns = [
-                  path("upload/", UploadImage.as_view(), name="UploadImage"),
                   path("profile/", UserUpdateProfileView.as_view(), name='update-profile')
               ] + router.urls

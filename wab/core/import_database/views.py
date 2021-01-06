@@ -19,6 +19,7 @@ class ImportCsvView(CreateAPIView):
 
     def post(self, request, **kwargs):
         try:
+            user = request.user
             file_obj = request.FILES['file']
 
             file = file_obj.read().decode('utf-8')
@@ -62,7 +63,7 @@ class ImportCsvView(CreateAPIView):
                 # print(response_id)
                 ImportData.objects.create(
                     provider_connection_id=connection.id,
-                    username='test_user',
+                    username=user.username,
                     table=table_name,
                     record=list_insert
                 )

@@ -61,15 +61,3 @@ class UserUpdateProfileView(UpdateAPIView):
             return responses.ok(data=serializer.data, method=constant.PUT, entity_name='user')
 
 
-class UploadImage(APIView):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    queryset = User.objects.all()
-    serializer_class = SwaggerSerializer
-
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        image = data.get("image")
-        url = upload_to_s3(folder='avatar', file_name=image.name, file=image)
-        # delete_s3(folder='avatar', file_name=image.name)
-
-        return responses.ok(data=url)
