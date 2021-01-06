@@ -18,14 +18,13 @@ from wab.utils.export_manager import GeneratePdf
 
 class ExportPdfView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
-        start = request.GET.get('start', None)
-        end = request.GET.get('end', None)
         table_name = kwargs.get('table_name', None)
+        list_filter = kwargs.get('list_filter', None)
+        list_column = kwargs.get('list_column', None)
         connection_id = kwargs.get('connection', None)
         provider_connection = self.queryset.get(id=connection_id)
         provider = provider_connection.provider
@@ -35,10 +34,13 @@ class ExportPdfView(ListAPIView):
                     mongo_db_manager = MongoDBManager()
                     try:
                         db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
-                        columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
-                        documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
-                                                                              column_sort=None,
-                                                                              sort=None, page=1, page_size=20)
+                        # columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
+                        # documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
+                        #                                                       column_sort=None,
+                        #                                                       sort=None, page=1, page_size=20)
+                        documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
+                                                                         list_filter=list_filter,
+                                                                         list_column=list_column)
                         data = list(documents)
                         result = json.loads(dumps(data))
                         # final_data = []
@@ -47,7 +49,7 @@ class ExportPdfView(ListAPIView):
                         #     for k,v in d.items():
                         #         i.append(v)
                         #     final_data.append(i)
-                        pdf = GeneratePdf(result, table_name, columns)
+                        pdf = GeneratePdf(result, table_name, list_column)
                         response = pdf.generate_pdf(context={})
                         return response
                     except Exception as err:
@@ -63,7 +65,6 @@ class ExportPdfView(ListAPIView):
 
 class ExportExcelView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
@@ -114,7 +115,6 @@ class ExportExcelView(ListAPIView):
 
 class ExportTextView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):

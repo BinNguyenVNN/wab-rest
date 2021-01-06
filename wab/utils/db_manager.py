@@ -1,5 +1,5 @@
-import datetime
 import urllib.parse
+from datetime import datetime
 
 import bson.objectid
 import pymongo
@@ -11,7 +11,7 @@ from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
 
 
 def json_mongo_handler(x):
-    if isinstance(x, datetime.datetime):
+    if isinstance(x, datetime):
         return x.isoformat()
     elif isinstance(x, bson.objectid.ObjectId):
         return str(x)
@@ -33,19 +33,25 @@ class Singleton(type):
 class MongoDBManager(object):
     __metaclass__ = Singleton
     hosts = {}
-    databases = {}
+
+    def delete_cache_db_exception(self, str_cache_db):
+        del self.hosts[str_cache_db]
 
     def connection_mongo(self, host='localhost', port=None, database=None, username=None, password=None,
                          ssl=False):
-        if host in self.hosts.keys() and database in self.databases.keys():
-            return self.hosts[host]
+        str_cache_db = host
+        str_ssl = 'false'
+        if ssl:
+            str_ssl = 'true'
+        str_cache_db = str_cache_db + str_ssl
+        if port > 0:
+            str_cache_db = str_cache_db + str(port)
+        if str_cache_db in self.hosts.keys():
+            return self.hosts[str_cache_db], str_cache_db
         else:
             try:
                 us = urllib.parse.quote_plus(username)
                 pw = urllib.parse.quote_plus(password)
-                str_ssl = 'false'
-                if ssl:
-                    str_ssl = 'true'
                 if port <= 0:
                     prefix = MONGO_SRV_CONNECTION
                     client = MongoClient('%s://%s:%s@%s/?ssl=%s' % (prefix, us, pw, host, str_ssl))
@@ -53,9 +59,8 @@ class MongoDBManager(object):
                     prefix = MONGO_CONNECTION
                     client = MongoClient('%s://%s:%s@%s:%s/?ssl=%s' % (prefix, us, pw, host, str(port), str_ssl))
                 db = client[database]
-                self.hosts[host] = db
-                self.databases[database] = database
-                return db
+                self.hosts[str_cache_db] = db
+                return db, str_cache_db
             except Exception as err:
                 raise Exception(err)
 
@@ -67,11 +72,13 @@ class MongoDBManager(object):
                                      database=provider_connection.database,
                                      ssl=provider_connection.ssl)
 
-    def get_all_collections(self, db):
+    def get_all_collections(self, db, cache_db=None):
         try:
             collections = db.list_collection_names()
             return collections
         except Exception as err:
+            if cache_db:
+                self.delete_cache_db_exception(cache_db)
             raise Exception(err)
 
     def get_all_documents(self, db, collection, column_sort, page=1, page_size=20, sort=pymongo.DESCENDING):
@@ -99,6 +106,23 @@ class MongoDBManager(object):
     def insert_data_collection(self, db, collection_name, list_data):
         collection = db[collection_name]
         collection.insert(list_data)
+
+    @staticmethod
+    def export_db_by_column(db, table, list_filter=None, list_column=None):
+        collection = db[table]
+        if list_column:
+            select_column = {}
+            for c in list_column:
+                select_column.update({c: 1})
+            if list_filter:
+                return collection.find(
+                    list_filter,
+                    select_column
+                )
+            else:
+                return collection.find({}, select_column)
+        else:
+            return collection.find({})
 
     @staticmethod
     def find_by_fk(db, table, column, condition, value):

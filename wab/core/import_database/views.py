@@ -29,8 +29,8 @@ class ImportCsvView(CreateAPIView):
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
-                collections = mongo_db_manager.get_all_collections(db=db)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+                collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
                 if table_name not in collections:
                     return responses.bad_request(data=None, message_code="Table name is not exists")
                 # table = db[table_name]

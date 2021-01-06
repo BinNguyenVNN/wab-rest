@@ -84,13 +84,14 @@ class DBConnectionConnectView(CreateAPIView):
                 try:
                     if provider.name == MONGO:
                         mongo_db_manager = MongoDBManager()
-                        db = mongo_db_manager.connection_mongo(host=data.get('host'), port=data.get('port'),
-                                                               username=data.get('username'),
-                                                               password=data.get('password'),
-                                                               database=data.get('database'), ssl=data.get('ssl'))
-                        mongo_db_manager.get_all_collections(db=db)
+                        db, cache_db = mongo_db_manager.connection_mongo(host=data.get('host'), port=data.get('port'),
+                                                                         username=data.get('username'),
+                                                                         password=data.get('password'),
+                                                                         database=data.get('database'),
+                                                                         ssl=data.get('ssl'))
+                        collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
                         # serializer.save()
-                        return responses.ok(data="Connect success", method=constant.POST,
+                        return responses.ok(data=collections, method=constant.POST,
                                             entity_name='db_provider_connection')
                     else:
                         # TODO: implement another phase
@@ -117,8 +118,8 @@ class DBConnectionListTableView(ListAPIView):
                 if provider:
                     if provider.name == MONGO:
                         mongo_db_manager = MongoDBManager()
-                        db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
-                        data = mongo_db_manager.get_all_collections(db=db)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        data = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
                         return responses.ok(data=data, method=constant.POST, entity_name='db_provider_connection')
                     else:
                         # TODO: implement another phase
