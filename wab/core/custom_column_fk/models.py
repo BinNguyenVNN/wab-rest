@@ -4,15 +4,7 @@ from django.db import models
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
-
-
-class OPERATOR(Enum):
-    operator_in = ('in', 'in')
-    operator_contain = ('contain', 'contain')
-
-    @classmethod
-    def get_value(cls, member):
-        return cls[member].value[0]
+from wab.utils.operator import OPERATOR_MONGODB
 
 
 class CustomColumnFK(BaseModel):
@@ -22,8 +14,8 @@ class CustomColumnFK(BaseModel):
     field_name = models.CharField(null=True, blank=True, max_length=255)
     operator = models.CharField(
         max_length=32,
-        choices=[x.value for x in OPERATOR],
-        default=OPERATOR.get_value('operator_contain'),
+        choices=[x.value for x in OPERATOR_MONGODB],
+        default=OPERATOR_MONGODB.get_value('operator_equals'),
         null=True,
         blank=True
     )

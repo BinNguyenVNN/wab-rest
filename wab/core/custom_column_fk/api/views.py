@@ -1,10 +1,14 @@
+from rest_framework.generics import ListAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 
 from wab.core.custom_column_fk.api.serializers import CustomColumnFKSerializer
 from wab.core.custom_column_fk.models import CustomColumnFK
-from wab.utils import responses, constant
+from wab.core.serializers import SwaggerSerializer
+from wab.utils import responses, constant, token_authentication
+from wab.utils.operator import OPERATOR_MONGODB
 from wab.utils.paginations import ResultsSetPagination
 
 
@@ -30,3 +34,17 @@ class CustomColumnFKViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin
         instance = self.get_object()
         self.perform_destroy(instance)
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_fk')
+
+
+class ListOperatorMongoDBView(ListAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    queryset = CustomColumnFK.objects.all()
+    serializer_class = SwaggerSerializer
+
+    def get(self, request, *args, **kwargs):
+        list_operator_mongodb = []
+        for x in OPERATOR_MONGODB:
+            list_operator_mongodb.append({"code": x.value[0], "name": x.value[1]})
+
+        return responses.ok(data=list_operator_mongodb, method=constant.GET, entity_name='custom_column_fk')

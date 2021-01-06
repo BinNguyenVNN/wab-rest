@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, OPERATOR, RELATION
 from wab.utils import responses
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
+from wab.utils.operator import OPERATOR_MONGODB
 
 
 def json_mongo_handler(x):
@@ -126,11 +127,39 @@ class MongoDBManager(object):
 
     @staticmethod
     def find_by_fk(db, table, column, condition, value):
-        db[table].find({
+        mongo_db_manager = MongoDBManager()
+        operator, value = mongo_db_manager.condition_filter(condition, value)
+        return db[table].find({
             column: {
-                '$' + condition: value
+                operator: value
             }
         })
+
+    @staticmethod
+    def condition_filter(condition, value):
+        operator = '$eq'
+        if condition == OPERATOR_MONGODB.get_value('operator_equals'):
+            operator = '$eq'
+        elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
+            operator = '$ne'
+        elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
+            operator = '$lt'
+        elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
+            operator = '$lte'
+        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
+            operator = '$gt'
+        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
+            operator = '$gte'
+        elif condition == OPERATOR_MONGODB.get_value('operator_in'):
+            operator = '$in'
+            # value = value.split(',')
+        elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
+            operator = '$nin'
+            # value = value.split(',')
+        elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
+            operator = '$regex'
+            value = f".*{value}.*"
+        return operator, value
 
     @staticmethod
     def union(db, table_1, field_1, table_2, field_2, condition_items, order_by):
