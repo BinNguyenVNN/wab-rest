@@ -9,6 +9,8 @@ class User(AbstractUser):
 
     #: First and last name do not cover name patterns around the globe
     name = models.CharField(_("Name of User"), blank=True, max_length=255)
+    description = models.TextField(blank=True, null=True)
+    avatar = models.CharField(_("Img avatar"), blank=True, null=True, max_length=255)
 
     def get_absolute_url(self):
         """Get url for user's detail view.
