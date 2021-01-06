@@ -205,14 +205,14 @@ WAB_API = 'https://persei.risotech.vn/'
 PASSWORD_RESET_TIMEOUT_DAYS = 1
 
 # FCM_API_KEY = 'AIzaSyDbEcTjMnZDI4oMT8uMX5BXTdH0uXZXqr0'
-FCM_API_SERVER_KEY = 'AAAAxw40MVk:APA91bFDkOsEdx3D7J123oraAZc_opYAXx4zGG4TXCGSpLW1tfM8uaQwrR1-ID8Vt1XCbBna6xW5p40iYXtAvpJvutHXSqMMGHb-I7ulWwi_jCRAmHbDQ9sb6stw8XeR8Mk5yFG2mPzm'
+FCM_API_SERVER_KEY = env('FCM_API_SERVER_KEY', default='')
 # AUTH_DOMAIN = 'vmvp-persei.firebaseapp.com'
 # DATABASE_URL = 'https://mvp-persei.firebaseio.com'
 # PROJECT_ID = 'mvp-persei'
 # STORAGE_BUCKET = 'mvp-persei.appspot.com'
 # MESSAGE_SENDER_ID = '254451608177'
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='')
 AWS_REGION_NAME = 'ap-southeast-1'
 AWS_BUCKET_NAME = 'persei'
