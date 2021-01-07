@@ -6,7 +6,6 @@ import xlsxwriter as xlsxwriter
 from bson.json_util import dumps
 from django.http import HttpResponse
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
@@ -33,7 +32,7 @@ class ExportPdfView(ListAPIView):
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
                     try:
-                        db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                         # columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
                         # documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                         #                                                       column_sort=None,
@@ -74,7 +73,7 @@ class ExportExcelView(ListAPIView):
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
                 c = db.__getattr__(table_name).find().limit(20)
 
                 result = json.loads(dumps(list(c)))
@@ -124,7 +123,7 @@ class ExportTextView(ListAPIView):
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
                 c = db.__getattr__(table_name).find().limit(20)
 
                 result = json.loads(dumps(list(c)))

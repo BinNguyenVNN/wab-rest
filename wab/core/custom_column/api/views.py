@@ -136,7 +136,6 @@ class CustomColumnConfigTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixi
 
 class UpdateCustomColumnConfigTypeView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    permission_classes = [AllowAny, ]
     serializer_class = UpdateCustomColumnConfigTypeSerializer
 
     @transaction.atomic()

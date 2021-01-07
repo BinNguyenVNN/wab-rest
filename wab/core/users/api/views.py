@@ -48,7 +48,7 @@ class UserUpdateProfileView(UpdateAPIView):
                 """
         data = request.data
         image = data.get('image')
-        url = upload_to_s3(folder='avatar', file_name=image.name, file=image)
+        url = upload_to_s3(folder='avatar', file_name=image.name, file=image, user_id=request.user.id)
         data.update({'avatar': url})
         del data['image']
         serializer = UserUpdateSerializer(data=data)

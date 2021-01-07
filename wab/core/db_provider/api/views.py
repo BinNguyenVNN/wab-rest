@@ -146,7 +146,7 @@ class DBConnectionListColumnView(ListAPIView):
             if provider:
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
-                    db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                    db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                     columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
                     return responses.ok(data=columns, method=constant.POST, entity_name='db_provider_connection')
                 else:
@@ -155,7 +155,7 @@ class DBConnectionListColumnView(ListAPIView):
             else:
                 return responses.bad_request(data='Provider not found', message_code='PROVIDER_NOT_FOUND')
         except Exception as err:
-            return responses.not_found(data=None, message_code='PROVIDER_CONNECTION_NOT_FOUND', message_system=err)
+            return responses.not_found(data=None, message_code='PROVIDER_CONNECTION_NOT_FOUND', message_system=str(err))
 
 
 class DBConnectionListDataView(ListAPIView):
@@ -177,7 +177,7 @@ class DBConnectionListDataView(ListAPIView):
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
                     try:
-                        db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                         documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                               column_sort=column_sort,
                                                                               sort=sort, page=page, page_size=page_size)

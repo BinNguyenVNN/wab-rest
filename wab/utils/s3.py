@@ -1,5 +1,3 @@
-import logging
-
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
@@ -15,21 +13,24 @@ def connect_s3():
     return client
 
 
-def upload_to_s3(folder, file_name, file):
-    s3 = connect_s3()
-    bucket_name = settings.AWS_BUCKET_NAME
-    region_name = settings.AWS_REGION_NAME
-    bucket = s3.Bucket(bucket_name)
-    path = f"{folder}/{file_name}"
-    bucket.put_object(Key=path, Body=file, ACL='public-read', ContentType=file.content_type)
-    url = "https://%s.s3.%s.amazonaws.com/%s" % (bucket_name, region_name, path)
-    return url
+def upload_to_s3(folder, file_name, file, user_id):
+    try:
+        s3 = connect_s3()
+        bucket_name = settings.AWS_BUCKET_NAME
+        region_name = settings.AWS_REGION_NAME
+        bucket = s3.Bucket(bucket_name)
+        path = f"{folder}/{user_id}/{file_name}"
+        bucket.put_object(Key=path, Body=file, ACL='public-read', ContentType=file.content_type)
+        url = "https://%s.s3.%s.amazonaws.com/%s" % (bucket_name, region_name, path)
+        return url
+    except ClientError as err:
+        raise Exception(err)
 
 
-def delete_s3(folder, file_name):
+def delete_s3(folder, file_name, user_id):
     s3 = connect_s3()
     bucket = s3.Bucket(settings.AWS_BUCKET_NAME)
-    path = f"{folder}/{file_name}"
+    path = f"{folder}/{user_id}/{file_name}"
     return bucket.delete_objects(
         Delete={
             'Objects': [

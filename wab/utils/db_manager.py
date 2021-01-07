@@ -82,7 +82,8 @@ class MongoDBManager(object):
                 self.delete_cache_db_exception(cache_db)
             raise Exception(err)
 
-    def get_all_documents(self, db, collection, column_sort, page=1, page_size=20, sort=pymongo.DESCENDING):
+    @staticmethod
+    def get_all_documents(db, collection, column_sort, page=1, page_size=20, sort=pymongo.DESCENDING):
         if column_sort:
             documents = db[collection].find({}).sort(column_sort, sort).skip((page - 1) * page_size).limit(page_size)
         else:
@@ -90,21 +91,28 @@ class MongoDBManager(object):
         count = documents.count()
         return documents, count
 
-    def get_all_keys(self, db, collection):
-        cursor = db[collection].find({})
-        for document in cursor:
-            return document.keys()
+    @staticmethod
+    def get_all_keys(db, collection):
+        try:
+            cursor = db[collection].find({}).limit(1)
+            for document in cursor:
+                return document.keys()
+        except Exception as err:
+            raise Exception(err)
 
-    def create_new_collection(self, db, collection_name):
+    @staticmethod
+    def create_new_collection(db, collection_name):
         collection = db[collection_name]
         return collection
 
-    def create_new_field(self, db, collection_name, field_name, field_value):
+    @staticmethod
+    def create_new_field(db, collection_name, field_name, field_value):
         collection = db[collection_name]
         collection.insert({field_name: field_value})
         return collection
 
-    def insert_data_collection(self, db, collection_name, list_data):
+    @staticmethod
+    def insert_data_collection(db, collection_name, list_data):
         collection = db[collection_name]
         collection.insert(list_data)
 
@@ -128,38 +136,34 @@ class MongoDBManager(object):
     @staticmethod
     def find_by_fk(db, table, column, condition, value):
         mongo_db_manager = MongoDBManager()
-        operator, value = mongo_db_manager.condition_filter(condition, value)
+        item = mongo_db_manager.condition_filter(column, condition, value)
         return db[table].find({
-            column: {
-                operator: value
-            }
+            item
         })
 
     @staticmethod
-    def condition_filter(condition, value):
-        operator = '$eq'
+    def condition_filter(column, condition, value):
+        item = {column: {"$eq": value}}
         if condition == OPERATOR_MONGODB.get_value('operator_equals'):
-            operator = '$eq'
+            item = {column: {"$eq": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
-            operator = '$ne'
+            item = {column: {"$ne": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
-            operator = '$lt'
+            item = {column: {"$lt": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
-            operator = '$lte'
+            item = {column: {"$lte": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
-            operator = '$gt'
+            item = {column: {"$gt": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
-            operator = '$gte'
+            item = {column: {"$gte": value}}
         elif condition == OPERATOR_MONGODB.get_value('operator_in'):
-            operator = '$in'
-            # value = value.split(',')
+            item = {column: {"$in": [value]}}
         elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
-            operator = '$nin'
-            # value = value.split(',')
+            item = {column: {"$nin": [value]}}
         elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
-            operator = '$regex'
             value = f".*{value}.*"
-        return operator, value
+            item = {column: {"$regex": [value]}}
+        return item
 
     @staticmethod
     def union(db, table_1, field_1, table_2, field_2, condition_items, order_by):
@@ -270,7 +274,7 @@ class MongoDBManager(object):
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
                     if condition.operator == OPERATOR.get_value('type_equal'):
                         item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                    elif condition.operator == OPERATOR.get_value('type_in'):
                         item = {condition.field_name: {"$in": [condition.value]}}
                     else:
                         item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
@@ -278,7 +282,7 @@ class MongoDBManager(object):
                 else:
                     if condition.operator == OPERATOR.get_value('type_equal'):
                         item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
+                    elif condition.operator == OPERATOR.get_value('type_in'):
                         item = {condition.field_name: {"$in": [condition.value]}}
                     else:
                         item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
@@ -312,7 +316,7 @@ class MongoDBManager(object):
                     "as": "data"
                 },
             },
-            {"$unwind": "$data"},
+            # {"$unwind": "$data"},
             {
                 "$match": {
                     "$and": list_match_and,
@@ -320,8 +324,11 @@ class MongoDBManager(object):
                 }
             },
             {"$sort": {order_by: -1}},
+            # {
+            #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+            # },
             {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
             },
             {
                 "$project": {"data": 0, "_id": 0}
@@ -409,7 +416,7 @@ class MongoDBManager(object):
     def sql_function_exe(self, collection_name, sql_function_id):
         try:
             sql_function = SqlFunction.objects.get(id=sql_function_id)
-            db = self.connection_mongo_by_provider(sql_function.provider)
+            db, cache_db = self.connection_mongo_by_provider(sql_function.provider)
             collection = db[collection_name]
             sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
             if len(sql_function_merge):
@@ -425,7 +432,7 @@ class MongoDBManager(object):
             else:
                 return responses.bad_request(data='SQL error', message_code='MERGE_TYPE_ERROR')
         except Exception as err:
-            return responses.bad_request(data='SQL error', message_code='SQL_ERROR', )
+            return responses.bad_request(data=str(err), message_code='SQL_ERROR')
 
 
 class PostgresManager(object):

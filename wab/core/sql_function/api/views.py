@@ -201,7 +201,7 @@ class SqlJoinViewTest(ListAPIView):
         if provider:
             if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 collection = db["order_items"]
                 pipeline = [
                     {"$limit": 20},
@@ -257,7 +257,7 @@ class SqlUnionViewTest(ListAPIView):
         if provider:
             if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 collection = db["order_items"]
 
                 pipeline = [

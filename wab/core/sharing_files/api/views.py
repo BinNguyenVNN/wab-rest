@@ -47,7 +47,7 @@ class SharingFilesGetDataView(ListAPIView):
                     if provider.name == MONGO:
                         mongo_db_manager = MongoDBManager()
                         try:
-                            db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                            db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                             documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                                   column_sort=None,
                                                                                   sort=None, page=None,
