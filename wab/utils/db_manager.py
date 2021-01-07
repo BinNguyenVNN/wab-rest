@@ -5,7 +5,7 @@ import bson.objectid
 import pymongo
 from pymongo import MongoClient
 
-from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, OPERATOR, RELATION
+from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, RELATION
 from wab.utils import responses
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
 from wab.utils.operator import OPERATOR_MONGODB
@@ -39,8 +39,8 @@ class MongoDBManager(object):
         del self.hosts[str_cache_db]
 
     def connection_mongo(self, host='localhost', port=None, database=None, username=None, password=None,
-                         ssl=False):
-        str_cache_db = host
+                         ssl=False, user_id=0):
+        str_cache_db = str(user_id) + host
         str_ssl = 'false'
         if ssl:
             str_ssl = 'true'
@@ -71,7 +71,8 @@ class MongoDBManager(object):
                                      username=provider_connection.username,
                                      password=provider_connection.password,
                                      database=provider_connection.database,
-                                     ssl=provider_connection.ssl)
+                                     ssl=provider_connection.ssl,
+                                     user_id=provider_connection.creator.id)
 
     def get_all_collections(self, db, cache_db=None):
         try:
@@ -134,14 +135,6 @@ class MongoDBManager(object):
             return collection.find({})
 
     @staticmethod
-    def find_by_fk(db, table, column, condition, value):
-        mongo_db_manager = MongoDBManager()
-        item = mongo_db_manager.condition_filter(column, condition, value)
-        return db[table].find({
-            item
-        })
-
-    @staticmethod
     def condition_filter(column, condition, value):
         item = {column: {"$eq": value}}
         if condition == OPERATOR_MONGODB.get_value('operator_equals'):
@@ -162,11 +155,20 @@ class MongoDBManager(object):
             item = {column: {"$nin": [value]}}
         elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
             value = f".*{value}.*"
-            item = {column: {"$regex": [value]}}
+            item = {column: {"$regex": value}}
         return item
 
-    @staticmethod
-    def union(db, table_1, field_1, table_2, field_2, condition_items, order_by):
+    def find_by_fk(self, db, table, column, condition, value, page=1, page_size=20):
+        item = self.condition_filter(column, condition, value)
+        select_column = {column: 1}
+        documents = db[table].find(
+            item,
+            select_column
+        ).skip((page - 1) * page_size).limit(page_size)
+        count = documents.count()
+        return documents, count
+
+    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by):
         if order_by is None:
             order_by = field_1
         list_match_and_tb1 = []
@@ -175,38 +177,16 @@ class MongoDBManager(object):
         list_match_or_tb2 = []
         for condition in condition_items:
             if condition.table_name == table_1:
+                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and_tb1.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or_tb1.append(item)
             else:
+                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and_tb2.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or_tb2.append(item)
         pipeline = [
             {"$limit": 1},  # Reduce the result set to a single document.
@@ -261,9 +241,8 @@ class MongoDBManager(object):
         collection = db[table_1]
         return collection.aggregate(pipeline)
 
-    @staticmethod
     # TODO: right join switch table
-    def left_right_join(db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+    def left_right_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
         if order_by is None:
             order_by = field_1
         collection = db[table_1]
@@ -271,38 +250,16 @@ class MongoDBManager(object):
         list_match_or = []
         for condition in condition_items:
             if condition.table_name == table_1:
+                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or.append(item)
             else:
+                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or.append(item)
 
         pipeline = [
@@ -336,8 +293,7 @@ class MongoDBManager(object):
         ]
         return collection.aggregate(pipeline)
 
-    @staticmethod
-    def inner_join(db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+    def inner_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
         if order_by is None:
             order_by = field_1
         collection = db[table_1]
@@ -345,38 +301,16 @@ class MongoDBManager(object):
         list_match_or = []
         for condition in condition_items:
             if condition.table_name == table_1:
+                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or.append(item)
             else:
+                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
                 if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_and.append(item)
                 else:
-                    if condition.operator == OPERATOR.get_value('type_equal'):
-                        item = {"data." + condition.field_name: {"$eq": condition.value}}
-                    elif condition.operator == OPERATOR.get_value('type_in'):
-                        item = {"data." + condition.field_name: {"$in": [condition.value]}}
-                    else:
-                        item = {"data." + condition.field_name: {"$regex": ".*" + condition.value + ".*"}}
                     list_match_or.append(item)
 
         pipeline = [

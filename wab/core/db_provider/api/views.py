@@ -88,7 +88,7 @@ class DBConnectionConnectView(CreateAPIView):
                                                                          username=data.get('username'),
                                                                          password=data.get('password'),
                                                                          database=data.get('database'),
-                                                                         ssl=data.get('ssl'))
+                                                                         ssl=data.get('ssl'), user_id=request.user.id)
                         collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
                         # serializer.save()
                         return responses.ok(data=collections, method=constant.POST,
@@ -118,7 +118,8 @@ class DBConnectionListTableView(ListAPIView):
                 if provider:
                     if provider.name == MONGO:
                         mongo_db_manager = MongoDBManager()
-                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                            provider_connection=provider_connection)
                         data = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
                         return responses.ok(data=data, method=constant.POST, entity_name='db_provider_connection')
                     else:
@@ -146,7 +147,8 @@ class DBConnectionListColumnView(ListAPIView):
             if provider:
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
-                    db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                    db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                        provider_connection=provider_connection)
                     columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
                     return responses.ok(data=columns, method=constant.POST, entity_name='db_provider_connection')
                 else:
@@ -162,6 +164,7 @@ class DBConnectionListDataView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
+    pagination_class = ResultsSetPagination
 
     def get(self, request, *args, **kwargs):
         table_name = kwargs.get('table', None)
@@ -177,7 +180,8 @@ class DBConnectionListDataView(ListAPIView):
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
                     try:
-                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                            provider_connection=provider_connection)
                         documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                               column_sort=column_sort,
                                                                               sort=sort, page=page, page_size=page_size)
@@ -186,7 +190,7 @@ class DBConnectionListDataView(ListAPIView):
                         return responses.paging_data(data=result, total_count=count, method=constant.POST,
                                                      entity_name='db_provider_connection')
                     except Exception as err:
-                        return responses.bad_request(data=err, message_code='BD_ERROR')
+                        return responses.bad_request(data=str(err), message_code='BD_ERROR')
                 else:
                     # TODO: implement another phase
                     pass
