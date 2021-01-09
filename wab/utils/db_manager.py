@@ -3,11 +3,12 @@ from datetime import datetime
 
 import bson.objectid
 import pymongo
+from bson import Code
 from pymongo import MongoClient
 
-from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, RELATION
+from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE
 from wab.utils import responses
-from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
+from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION, MONGO
 from wab.utils.operator import OPERATOR_MONGODB
 
 
@@ -133,6 +134,20 @@ class MongoDBManager(object):
                 return collection.find({}, select_column)
         else:
             return collection.find({})
+
+    @staticmethod
+    def check_column_data_type(self, db, table, column):
+        return db[table].aggregate(
+
+            [
+                {"$project": {"fieldType": {"$type": "$" + column}}},
+            ]
+        )
+        # map = Code("function() { for (var key in this) { emit(key, [ typeof value[key] ]); } }")
+        #
+        # reduce = Code("function(key, stuff) { return (key, add_to_set(stuff) ); }")
+        # result = db[table].map_reduce(map, reduce, "result")
+        # return result
 
     @staticmethod
     def condition_filter(column, condition, value):
@@ -350,21 +365,36 @@ class MongoDBManager(object):
     def sql_function_exe(self, collection_name, sql_function_id):
         try:
             sql_function = SqlFunction.objects.get(id=sql_function_id)
-            db, cache_db = self.connection_mongo_by_provider(sql_function.provider)
-            collection = db[collection_name]
-            sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
-            if len(sql_function_merge):
-                for index, merge in enumerate(sql_function_merge):
-                    table_name_first = merge.table_name
-                    merge_type = merge.merge_type
-                    if merge_type:
-                        merge_after = sql_function_merge[index + 1]
-                        table_name_second = merge_after.table_name
-                        self.left_join()
+            connection = sql_function.connection
+            provider = connection.connection
+            if provider.name == MONGO:
+                db, cache_db = self.connection_mongo_by_provider(connection)
+                collection = db[collection_name]
+                sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
+                if len(sql_function_merge):
+                    for index, merge in enumerate(sql_function_merge):
+                        table_name_first = merge.table_name
+                        merge_type = merge.merge_type
+                        if merge_type == MERGE_TYPE.left_join:
+                            merge_after = sql_function_merge[index + 1]
+                            table_name_second = merge_after.table_name
+                            # self.left_right_join(db=db, table_1=table_name_first, field_1=)
+                        elif merge_type == MERGE_TYPE.right_join:
+                            self.left_right_join()
+                        elif merge_type == MERGE_TYPE.inner_join:
+                            self.inner_join()
+                        elif merge_type == MERGE_TYPE.union:
+                            self.union()
+                        elif merge_type == MERGE_TYPE.right_outer_join:
+                            self.right_outer_join()
+                        else:
+                            pass
 
-                order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
+                    order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
+                else:
+                    return responses.bad_request(data='SQL error', message_code='MERGE_TYPE_ERROR')
             else:
-                return responses.bad_request(data='SQL error', message_code='MERGE_TYPE_ERROR')
+                pass
         except Exception as err:
             return responses.bad_request(data=str(err), message_code='SQL_ERROR')
 

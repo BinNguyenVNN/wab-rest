@@ -161,7 +161,8 @@ class DBConnectionListColumnView(ListAPIView):
 
 
 class DBConnectionListDataView(ListAPIView):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    authentication_classes = []
+    permission_classes = []
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
     pagination_class = ResultsSetPagination
@@ -185,8 +186,9 @@ class DBConnectionListDataView(ListAPIView):
                         documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                               column_sort=column_sort,
                                                                               sort=sort, page=page, page_size=page_size)
+
                         data = list(documents)
-                        result = json.loads(dumps(data))
+                        result = json.loads(dumps(documents))
                         return responses.paging_data(data=result, total_count=count, method=constant.POST,
                                                      entity_name='db_provider_connection')
                     except Exception as err:
