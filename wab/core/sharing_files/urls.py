@@ -10,9 +10,9 @@ else:
     router = SimpleRouter()
 
 urlpatterns = [
-                  path('sharing-files/create-link/<str:connection_id>/<str:table_name>', SharingFilesGetLinkView.as_view(),
+                  path('create-link/<str:connection_id>/<str:table_name>/', SharingFilesGetLinkView.as_view(),
                        name='SharingFilesCreateLinkView'),
-                  path('sharing-files/get-data/<str:sharing_key>', SharingFilesGetDataView.as_view(),
+                  path('get-data/<str:sharing_key>/', SharingFilesGetDataView.as_view(),
                        name='SharingFilesGetDataView')
 
               ] + router.urls

@@ -18,5 +18,5 @@ urlpatterns = [
     path("sharing-files/", include("wab.core.sharing_files.urls")),
     path("list-operator/", ListOperatorView.as_view(), name='list-operator'),
     path("list-join/", ListJoinView.as_view(), name='list-operator'),
-path("list-relation/", ListRelationView.as_view(), name='list-relation'),
+    path("list-relation/", ListRelationView.as_view(), name='list-relation'),
 ]

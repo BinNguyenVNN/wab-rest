@@ -11,7 +11,7 @@ from wab.core.custom_column.api.serializers import CustomColumnRegexTypeSerializ
 from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
     CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
 from wab.core.db_provider.models import DBProviderConnection
-from wab.core.serializers import SwaggerSerializer, SwaggerConvertDataSerializer
+from wab.core.serializers import SwaggerConvertDataSerializer
 from wab.utils import token_authentication, responses, constant
 from wab.utils.db_manager import MongoDBManager
 from wab.utils.paginations import ResultsSetPagination
@@ -250,6 +250,7 @@ class ConvertData(UpdateAPIView):
         provider_connection = DBProviderConnection.objects.filter(id=provider_connection_id).first()
         db, cache_db = mongo_db.connection_mongo_by_provider(provider_connection=provider_connection)
         # type in [str, int, float, datetime]
-        is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=convert_field, data_type=data_type)
+        is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=convert_field,
+                                                              data_type=data_type)
 
         return responses.ok(data={"is_convert": is_convert}, method="put", entity_name="test")
