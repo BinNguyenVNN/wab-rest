@@ -3,12 +3,12 @@ from datetime import datetime
 
 import bson.objectid
 import pymongo
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 
 from wab.core.sql_function.models import SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE, \
     SqlFunctionConditionItems
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
-from wab.utils.operator import OPERATOR_MONGODB
+from wab.utils.operator import OPERATOR_MONGODB, MongoColumnType
 
 
 def json_mongo_handler(x):
@@ -136,327 +136,360 @@ class MongoDBManager(object):
 
     @staticmethod
     def check_column_data_type(db, table, column):
-        return db[table].aggregate(
+        result = db[table].aggregate(
 
             [
                 {"$project": {"fieldType": {"$type": "$" + column}}},
+                {"$limit": 1}
             ]
         )
+        data = None
+        for r in result:
+            data = r['fieldType']
+        return data
         # map = Code("function() { for (var key in this) { emit(key, [ typeof value[key] ]); } }")
         #
         # reduce = Code("function(key, stuff) { return (key, add_to_set(stuff) ); }")
         # result = db[table].map_reduce(map, reduce, "result")
         # return result
 
-    def update_convert_column_data_type(self, db, table, column, type):
-        if self.check_column_data_type(db, table, column):
-            return False
-        items = db[table].find()
-        for item in items:
-            try:
-                my_query = {"_id": item.get("_id")}
-                new_values = {"$set": {column: self.convert_column_data_type(item.get(column), type)}}
-            except:
-                continue
-            db[table].update_one(my_query, new_values)
-        return True
+    def update_convert_column_data_type(self, db, table, column, data_type):
+        real_data_type = self.check_column_data_type(db, table, column)
+        if real_data_type == data_type:
+            return True
+        else:
+            value, name = MongoColumnType.get_type(real_data_type)
+            r_value, r_name = MongoColumnType.get_type(data_type)
+            if r_name:
+                operations = []
+                collection = db[table]
+                for doc in collection.find({column: {"$exists": True, "$type": value}}):
+                    # Set a random number on every document update
+                    operations.append(
+                        UpdateOne({"_id": doc["_id"]},
+                                  # {'$set': {column: {'$convert': {'input': doc.get(column), 'to': r_name}}}})
+                                  {"$set": {column: self.convert_column_data_type(doc.get(column), r_name)}})
+                    )
+
+                    # Send once every 1000 in batch
+                    if len(operations) == 1000:
+                        collection.bulk_write(operations, ordered=False)
+                        operations = []
+
+                if len(operations) > 0:
+                    collection.bulk_write(operations, ordered=False)
+            return True
 
     def convert_column_data_type(self, value, parse_to_type):
-        try:
-            if parse_to_type == "str":
-                if type(value) is str:
-                    return value
-                if value is None:
-                    return ""
-                return str(value)
-            elif parse_to_type == "int":
-                if type(value) is int:
-                    return value
-                if value is None:
-                    return 0
-                return int(value)
-            elif parse_to_type == "float":
-                if type(value) is float:
-                    return value
-                if value is None:
-                    return float(0.0)
-                return float(value)
-            elif parse_to_type == "datetime":
-                if value is None:
-                    return "01/01/1999 00:00"
-                date_time = datetime.strptime(value, "%d/%m/%Y %H:%M")
-                if type(date_time) is datetime:
-                    return value
-            return None
-        except:
-            return None
-
-    @staticmethod
-    def condition_filter(column, condition, value):
-        item = {column: {"$eq": value}}
-        if condition == OPERATOR_MONGODB.get_value('operator_equals'):
-            item = {column: {"$eq": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
-            item = {column: {"$ne": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
-            item = {column: {"$lt": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
-            item = {column: {"$lte": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
-            item = {column: {"$gt": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
-            item = {column: {"$gte": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_in'):
-            item = {column: {"$in": [value]}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
-            item = {column: {"$nin": [value]}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
-            value = f".*{value}.*"
-            item = {column: {"$regex": value}}
-        return item
-
-    def find_by_fk(self, db, table, column, condition, value, page=1, page_size=20):
-        item = self.condition_filter(column, condition, value)
-        select_column = {column: 1}
-        documents = db[table].find(
-            item,
-            select_column
-        ).skip((page - 1) * page_size).limit(page_size)
-        count = documents.count()
-        return documents, count
-
-    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by, page, page_size):
-        if order_by is None:
-            order_by = field_1
-        list_match_and_tb1 = []
-        list_match_or_tb1 = []
-        list_match_and_tb2 = []
-        list_match_or_tb2 = []
-        for condition in condition_items:
-            if condition.table_name == table_1:
-                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and_tb1.append(item)
-                else:
-                    list_match_or_tb1.append(item)
-            else:
-                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and_tb2.append(item)
-                else:
-                    list_match_or_tb2.append(item)
-        pipeline = [
-            {"$limit": 1},  # Reduce the result set to a single document.
-            {"$project": {"_id": 1}},  # Strip all fields except the Id.
-            {"$project": {"_id": 0}},  # Strip the id. The document is now empty.
-            {
-                "$lookup": {
-                    "from": table_1,
-                    "pipeline": [
-                        {
-                            "$match": {
-                                "$and": list_match_and_tb1,
-                                "$or": list_match_or_tb1
-                            }
-                        },
-                        {
-                            "$project": {
-                                "_id": 0, "result": "$" + field_1
-                            }
-                        }
-                    ],
-                    "as": "collection_table_1"
-                }
-            },
-            {
-                "$lookup": {
-                    "from": table_2,
-                    "pipeline": [
-                        {
-                            "$match": {
-                                "$and": list_match_and_tb2,
-                                "$or": list_match_or_tb2
-                            }
-                        },
-                        {
-                            "$project": {
-                                "_id": 0, "result": "$" + field_2
-                            }
-                        }
-                    ],
-
-                    "as": "collection_table_2"
-                }
-            },
-            {"$project": {
-                "union": {"$setUnion": ["$collection_table_1", "$collection_table_2"]}
-            }},
-            {"$unwind": "$union"},  # Unwind the union collection into a result set.
-            {"$replaceRoot": {"newRoot": "$union"}},  # Replace the root to cleanup the resulting documents.
-            {"$sort": {order_by: -1}},
-        ]
-        collection = db[table_1]
-        return collection.aggregate(pipeline)
-
-    # TODO: right join switch table
-    def left_right_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
-        if order_by is None:
-            order_by = field_1
-        collection = db[table_1]
-        list_match_and = []
-        list_match_or = []
-        for condition in condition_items:
-            if condition.table_name == table_1:
-                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and.append(item)
-                else:
-                    list_match_or.append(item)
-            else:
-                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and.append(item)
-                else:
-                    list_match_or.append(item)
-
-        pipeline = [
-            {"$skip": page},
-            {"$limit": page_size},
-            {
-                "$lookup": {
-                    "from": table_2,
-                    "localField": field_1,
-                    "foreignField": field_2,
-                    "as": "data"
-                },
-            },
-            # {"$unwind": "$data"},
-            {
-                "$match": {
-                    "$and": list_match_and,
-                    "$or": list_match_or
-                }
-            },
-            {"$sort": {order_by: -1}},
-            # {
-            #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
-            # },
-            {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
-            },
-            {
-                "$project": {"data": 0, "_id": 0}
-            }
-        ]
-        return collection.aggregate(pipeline)
-
-    def inner_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
-        if order_by is None:
-            order_by = field_1
-        collection = db[table_1]
-        list_match_and = []
-        list_match_or = []
-        for condition in condition_items:
-            if condition.table_name == table_1:
-                item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and.append(item)
-                else:
-                    list_match_or.append(item)
-            else:
-                item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
-                    list_match_and.append(item)
-                else:
-                    list_match_or.append(item)
-
-        pipeline = [
-            {"$skip": page},
-            {"$limit": page_size},
-            {
-                "$lookup": {
-                    "from": table_2,
-                    "localField": field_1,
-                    "foreignField": field_2,
-                    "as": "data"
-                },
-            },
-            {
-                "$unwind":
-                    {
-                        "path": "$data",
-                        "preserveNullAndEmptyArrays": False
-                    }
-            },
-            {
-                "$match": {
-                    "$and": list_match_and,
-                    "$or": list_match_or
-                }
-            },
-            {"$sort": {order_by: -1}},
-            {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
-            },
-            {
-                "$project": {"data": 0, "_id": 0}
-            }
-        ]
-        return collection.aggregate(pipeline)
-
-    def right_outer_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
-        pass
-
-    def sql_function_exe(self, sql_function=None, db=None, page=1, page_size=20):
-        sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
-        order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
-        order_by = None
-        if order_bys.exists():
-            order_by = order_bys.first().order_by_name
-        condition_items = SqlFunctionConditionItems.objects.filter(sql_function=sql_function)
-        if len(sql_function_merge) >= 2:
-            merge_type = MERGE_TYPE.left_join
-            table_name_first = None
-            column_name_first = None
-            table_name_second = None
-            column_name_second = None
-            for index, merge in enumerate(sql_function_merge):
-                table_name_first = merge.table_name
-                column_name_first = merge.column_name
-                merge_type = merge.merge_type
-                merge_after = sql_function_merge[index + 1]
-                table_name_second = merge_after.table_name
-                column_name_second = merge_after.column_name
-                break
-            if merge_type == MERGE_TYPE.left_join:
-                return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
-                                            table_2=table_name_second, field_2=column_name_second,
-                                            order_by=order_by, condition_items=condition_items,
-                                            page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.right_join:
-                return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
-                                            table_2=table_name_first, field_2=column_name_first,
-                                            order_by=order_by, condition_items=condition_items,
-                                            page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.inner_join:
-                return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
-                                       table_2=table_name_second, field_2=column_name_second,
-                                       order_by=order_by, condition_items=condition_items,
-                                       page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.union:
-                return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
-                                  table_2=table_name_second, field_2=column_name_second,
-                                  order_by=order_by, condition_items=condition_items,
-                                  page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.right_outer_join:
-                return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
-                                             table_2=table_name_second, field_2=column_name_second,
-                                             order_by=order_by, condition_items=condition_items,
-                                             page=page, page_size=page_size)
-            else:
+        if value:
+            try:
+                if parse_to_type == "string":
+                    if type(value) is str:
+                        return value
+                    return str(value)
+                elif parse_to_type == "bool":
+                    if type(value) is bool:
+                        return value
+                    return bool(value)
+                elif parse_to_type == "object":
+                    if type(value) is dict:
+                        return value
+                    return None
+                elif parse_to_type == "array":
+                    if type(value) is list:
+                        return [value]
+                    return [value]
+                elif parse_to_type == "int" or parse_to_type == "long":
+                    if type(value) is int:
+                        return value
+                    return int(value)
+                elif parse_to_type == "float" or parse_to_type == "decimal" or parse_to_type == "double":
+                    if type(value) is float:
+                        return value
+                    return float(value)
+                elif parse_to_type == "datetime":
+                    date_time = datetime.strptime(value, "%d/%m/%Y %H:%M")
+                    if type(date_time) is datetime:
+                        return value
+                    return None
+            except:
                 return None
         else:
             return None
+
+
+@staticmethod
+def condition_filter(column, condition, value):
+    item = {column: {"$eq": value}}
+    if condition == OPERATOR_MONGODB.get_value('operator_equals'):
+        item = {column: {"$eq": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
+        item = {column: {"$ne": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
+        item = {column: {"$lt": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
+        item = {column: {"$lte": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
+        item = {column: {"$gt": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
+        item = {column: {"$gte": value}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_in'):
+        item = {column: {"$in": [value]}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
+        item = {column: {"$nin": [value]}}
+    elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
+        value = f".*{value}.*"
+        item = {column: {"$regex": value}}
+    return item
+
+
+def find_by_fk(self, db, table, column, condition, value, page=1, page_size=20):
+    item = self.condition_filter(column, condition, value)
+    select_column = {column: 1}
+    documents = db[table].find(
+        item,
+        select_column
+    ).skip((page - 1) * page_size).limit(page_size)
+    count = documents.count()
+    return documents, count
+
+
+def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by, page, page_size):
+    if order_by is None:
+        order_by = field_1
+    list_match_and_tb1 = []
+    list_match_or_tb1 = []
+    list_match_and_tb2 = []
+    list_match_or_tb2 = []
+    for condition in condition_items:
+        if condition.table_name == table_1:
+            item = self.condition_filter(condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and_tb1.append(item)
+            else:
+                list_match_or_tb1.append(item)
+        else:
+            item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and_tb2.append(item)
+            else:
+                list_match_or_tb2.append(item)
+    pipeline = [
+        {"$limit": 1},  # Reduce the result set to a single document.
+        {"$project": {"_id": 1}},  # Strip all fields except the Id.
+        {"$project": {"_id": 0}},  # Strip the id. The document is now empty.
+        {
+            "$lookup": {
+                "from": table_1,
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$and": list_match_and_tb1,
+                            "$or": list_match_or_tb1
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": 0, "result": "$" + field_1
+                        }
+                    }
+                ],
+                "as": "collection_table_1"
+            }
+        },
+        {
+            "$lookup": {
+                "from": table_2,
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$and": list_match_and_tb2,
+                            "$or": list_match_or_tb2
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": 0, "result": "$" + field_2
+                        }
+                    }
+                ],
+
+                "as": "collection_table_2"
+            }
+        },
+        {"$project": {
+            "union": {"$setUnion": ["$collection_table_1", "$collection_table_2"]}
+        }},
+        {"$unwind": "$union"},  # Unwind the union collection into a result set.
+        {"$replaceRoot": {"newRoot": "$union"}},  # Replace the root to cleanup the resulting documents.
+        {"$sort": {order_by: -1}},
+    ]
+    collection = db[table_1]
+    return collection.aggregate(pipeline)
+
+
+# TODO: right join switch table
+def left_right_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+    if order_by is None:
+        order_by = field_1
+    collection = db[table_1]
+    list_match_and = []
+    list_match_or = []
+    for condition in condition_items:
+        if condition.table_name == table_1:
+            item = self.condition_filter(condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and.append(item)
+            else:
+                list_match_or.append(item)
+        else:
+            item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and.append(item)
+            else:
+                list_match_or.append(item)
+
+    pipeline = [
+        {"$skip": page},
+        {"$limit": page_size},
+        {
+            "$lookup": {
+                "from": table_2,
+                "localField": field_1,
+                "foreignField": field_2,
+                "as": "data"
+            },
+        },
+        # {"$unwind": "$data"},
+        {
+            "$match": {
+                "$and": list_match_and,
+                "$or": list_match_or
+            }
+        },
+        {"$sort": {order_by: -1}},
+        # {
+        #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+        # },
+        {
+            "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+        },
+        {
+            "$project": {"data": 0, "_id": 0}
+        }
+    ]
+    return collection.aggregate(pipeline)
+
+
+def inner_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+    if order_by is None:
+        order_by = field_1
+    collection = db[table_1]
+    list_match_and = []
+    list_match_or = []
+    for condition in condition_items:
+        if condition.table_name == table_1:
+            item = self.condition_filter(condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and.append(item)
+            else:
+                list_match_or.append(item)
+        else:
+            item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
+            if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                list_match_and.append(item)
+            else:
+                list_match_or.append(item)
+
+    pipeline = [
+        {"$skip": page},
+        {"$limit": page_size},
+        {
+            "$lookup": {
+                "from": table_2,
+                "localField": field_1,
+                "foreignField": field_2,
+                "as": "data"
+            },
+        },
+        {
+            "$unwind":
+                {
+                    "path": "$data",
+                    "preserveNullAndEmptyArrays": False
+                }
+        },
+        {
+            "$match": {
+                "$and": list_match_and,
+                "$or": list_match_or
+            }
+        },
+        {"$sort": {order_by: -1}},
+        {
+            "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+        },
+        {
+            "$project": {"data": 0, "_id": 0}
+        }
+    ]
+    return collection.aggregate(pipeline)
+
+
+def right_outer_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+    pass
+
+
+def sql_function_exe(self, sql_function=None, db=None, page=1, page_size=20):
+    sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
+    order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
+    order_by = None
+    if order_bys.exists():
+        order_by = order_bys.first().order_by_name
+    condition_items = SqlFunctionConditionItems.objects.filter(sql_function=sql_function)
+    if len(sql_function_merge) >= 2:
+        merge_type = MERGE_TYPE.left_join
+        table_name_first = None
+        column_name_first = None
+        table_name_second = None
+        column_name_second = None
+        for index, merge in enumerate(sql_function_merge):
+            table_name_first = merge.table_name
+            column_name_first = merge.column_name
+            merge_type = merge.merge_type
+            merge_after = sql_function_merge[index + 1]
+            table_name_second = merge_after.table_name
+            column_name_second = merge_after.column_name
+            break
+        if merge_type == MERGE_TYPE.left_join:
+            return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                        table_2=table_name_second, field_2=column_name_second,
+                                        order_by=order_by, condition_items=condition_items,
+                                        page=page, page_size=page_size)
+        elif merge_type == MERGE_TYPE.right_join:
+            return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
+                                        table_2=table_name_first, field_2=column_name_first,
+                                        order_by=order_by, condition_items=condition_items,
+                                        page=page, page_size=page_size)
+        elif merge_type == MERGE_TYPE.inner_join:
+            return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                   table_2=table_name_second, field_2=column_name_second,
+                                   order_by=order_by, condition_items=condition_items,
+                                   page=page, page_size=page_size)
+        elif merge_type == MERGE_TYPE.union:
+            return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
+                              table_2=table_name_second, field_2=column_name_second,
+                              order_by=order_by, condition_items=condition_items,
+                              page=page, page_size=page_size)
+        elif merge_type == MERGE_TYPE.right_outer_join:
+            return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                         table_2=table_name_second, field_2=column_name_second,
+                                         order_by=order_by, condition_items=condition_items,
+                                         page=page, page_size=page_size)
+        else:
+            return None
+    else:
+        return None
 
 
 class PostgresManager(object):

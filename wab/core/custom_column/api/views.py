@@ -243,13 +243,13 @@ class ConvertData(UpdateAPIView):
     def put(self, request, *args, **kwargs):
         data = request.data
         convert_field = data.get("convert_field")
-        type = data.get("type")
+        data_type = data.get("data_type")
         table = data.get("table")
         provider_connection_id = data.get("provider_connection_id")
         mongo_db = MongoDBManager()
         provider_connection = DBProviderConnection.objects.filter(id=provider_connection_id).first()
         db, cache_db = mongo_db.connection_mongo_by_provider(provider_connection=provider_connection)
         # type in [str, int, float, datetime]
-        is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=convert_field, type=type)
+        is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=convert_field, data_type=data_type)
 
         return responses.ok(data={"is_convert": is_convert}, method="put", entity_name="test")

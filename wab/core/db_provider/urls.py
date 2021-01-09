@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from wab.core.db_provider.api.views import DbProviderViewSet, DBProviderConnectionViewSet, DBConnectionConnectView, \
-    DBConnectionListTableView, DBConnectionListColumnView, DBConnectionListDataView
+    DBConnectionListTableView, DBConnectionListColumnView, DBConnectionListDataView, CheckView
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -22,5 +22,8 @@ urlpatterns = [
                        name='DBConnectionListColumnView'),
                   path('connection/documents/<int:pk>/<str:table>/', DBConnectionListDataView.as_view(),
                        name='DBConnectionListDataView'),
+
+                  path('connection/check/', CheckView.as_view(),
+                       name='CheckView'),
 
               ] + router.urls

@@ -69,6 +69,20 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
         return responses.ok(data=None, method=constant.DELETE, entity_name='db_provider_connection')
 
 
+class CheckView(ListAPIView):
+    authentication_classes = []
+    permission_classes = []
+    queryset = DBProviderConnection.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        provider_connection = self.queryset.get(id=1)
+        mongo_db_manager = MongoDBManager()
+        db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+            provider_connection=provider_connection)
+        result = mongo_db_manager.check_column_data_type(db, 'order_items', 'price')
+        return responses.ok(data=result, method=constant.GET, entity_name='db_provider_connection')
+
+
 class DBConnectionConnectView(CreateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     queryset = DbProvider.objects.all()
