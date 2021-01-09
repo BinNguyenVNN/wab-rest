@@ -8,6 +8,7 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateMode
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from wab.core.custom_column.models import CustomColumnMapping
 from wab.core.db_provider.api.serializers import DbProviderSerializer, DBProviderConnectionSerializer
 from wab.core.db_provider.models import DbProvider, DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
@@ -149,7 +150,46 @@ class DBConnectionListColumnView(ListAPIView):
                     mongo_db_manager = MongoDBManager()
                     db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                         provider_connection=provider_connection)
-                    columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
+                    # TODO: PhuongTN -> get real column from database
+                    columns = []
+                    real_columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
+                    # TODO: PhuongTN -> get custom column mapping
+                    custom_columns = CustomColumnMapping.objects.filter(connection_id=connection_id,
+                                                                        table_name=table_name)
+                    if custom_columns.exists():
+                        custom_columns = custom_columns
+                        for rc in real_columns:
+                            is_append = False
+                            for cc in custom_columns:
+                                if rc == cc.real_column:
+                                    obj = {
+                                        'id': cc.id,
+                                        'real_column': cc.real_column,
+                                        'custom_column_name': cc.custom_column_name,
+                                        'custom_column_id': cc.custom_column.id
+                                    }
+                                    columns.append(obj)
+                                    is_append = True
+                                    break
+                            if not is_append:
+                                obj = {
+                                    'id': None,
+                                    'real_column': rc,
+                                    'custom_column_name': None,
+                                    'custom_column_id': None
+                                }
+                                columns.append(obj)
+
+                    else:
+                        for rc in real_columns:
+                            obj = {
+                                'id': None,
+                                'real_column': rc,
+                                'custom_column_name': None,
+                                'custom_column_id': None
+                            }
+                            columns.append(obj)
+
                     return responses.ok(data=columns, method=constant.POST, entity_name='db_provider_connection')
                 else:
                     # TODO: implement another phase
