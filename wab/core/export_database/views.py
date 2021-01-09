@@ -70,13 +70,17 @@ class ExportExcelView(ListAPIView):
         try:
             connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
+            list_filter = kwargs.get('list_filter', None)
+            list_column = kwargs.get('list_column', None)
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
-                c = db.__getattr__(table_name).find().limit(20)
+                documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
+                                                                 list_filter=list_filter,
+                                                                 list_column=list_column)
 
-                result = json.loads(dumps(list(c)))
+                result = json.loads(dumps(list(documents)))
                 headers = list(result[0].keys())
 
                 output = io.BytesIO()
@@ -120,13 +124,18 @@ class ExportTextView(ListAPIView):
         try:
             connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
+            list_filter = kwargs.get('list_filter', None)
+            list_column = kwargs.get('list_column', None)
             connection = DBProviderConnection.objects.filter(id=connection_id).first()
             if connection.provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
                 c = db.__getattr__(table_name).find().limit(20)
+                documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
+                                                                 list_filter=list_filter,
+                                                                 list_column=list_column)
 
-                result = json.loads(dumps(list(c)))
+                result = json.loads(dumps(list(documents)))
                 headers = list(result[0].keys())
 
                 content = ''
