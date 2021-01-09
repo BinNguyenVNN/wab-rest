@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework.generics import UpdateAPIView, CreateAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 
 from wab.core.custom_column.api.serializers import CustomColumnRegexTypeSerializer, CustomColumnTypeSerializer, \
@@ -9,7 +10,10 @@ from wab.core.custom_column.api.serializers import CustomColumnRegexTypeSerializ
     CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer, CreateCustomColumnMappingSerializer
 from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
     CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
+from wab.core.db_provider.models import DBProviderConnection
+from wab.core.serializers import SwaggerSerializer, SwaggerConvertDataSerializer
 from wab.utils import token_authentication, responses, constant
+from wab.utils.db_manager import MongoDBManager
 from wab.utils.paginations import ResultsSetPagination
 
 
@@ -227,3 +231,25 @@ class UpdateCustomColumnMappingView(UpdateAPIView):
                                 entity_name='custom_column_mapping')
         except Exception as err:
             responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_MAPPING_NOT_FOUND')
+
+
+class ConvertData(UpdateAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    serializer_class = SwaggerConvertDataSerializer
+    pagination_class = ResultsSetPagination
+    queryset = CustomColumnMapping.objects.all()
+
+    def put(self, request, *args, **kwargs):
+        data = request.data
+        convert_field = data.get("convert_field")
+        type = data.get("type")
+        table = data.get("table")
+        provider_connection_id = data.get("provider_connection_id")
+        mongo_db = MongoDBManager()
+        provider_connection = DBProviderConnection.objects.filter(id=provider_connection_id).first()
+        db, cache_db = mongo_db.connection_mongo_by_provider(provider_connection=provider_connection)
+        # type in [str, int, float, datetime]
+        is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=convert_field, type=type)
+
+        return responses.ok(data={"is_convert": is_convert}, method="put", entity_name="test")

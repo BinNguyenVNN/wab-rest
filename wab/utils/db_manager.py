@@ -148,6 +148,49 @@ class MongoDBManager(object):
         # result = db[table].map_reduce(map, reduce, "result")
         # return result
 
+    def update_convert_column_data_type(self, db, table, column, type):
+        if self.check_column_data_type(db, table, column):
+            return False
+        items = db[table].find()
+        for item in items:
+            try:
+                my_query = {"_id": item.get("_id")}
+                new_values = {"$set": {column: self.convert_column_data_type(item.get(column), type)}}
+            except:
+                continue
+            db[table].update_one(my_query, new_values)
+        return True
+
+    def convert_column_data_type(self, value, parse_to_type):
+        try:
+            if parse_to_type == "str":
+                if type(value) is str:
+                    return value
+                if value is None:
+                    return ""
+                return str(value)
+            elif parse_to_type == "int":
+                if type(value) is int:
+                    return value
+                if value is None:
+                    return 0
+                return int(value)
+            elif parse_to_type == "float":
+                if type(value) is float:
+                    return value
+                if value is None:
+                    return float(0.0)
+                return float(value)
+            elif parse_to_type == "datetime":
+                if value is None:
+                    return "01/01/1999 00:00"
+                date_time = datetime.strptime(value, "%d/%m/%Y %H:%M")
+                if type(date_time) is datetime:
+                    return value
+            return None
+        except:
+            return None
+
     @staticmethod
     def condition_filter(column, condition, value):
         item = {column: {"$eq": value}}
