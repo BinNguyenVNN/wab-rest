@@ -1,5 +1,6 @@
 from django.db import models
 
+from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
 
 
@@ -32,8 +33,11 @@ class CustomColumnConfigValidation(BaseModel):
         db_table = 'custom_column_config_validation'
 
 
-class CustomColumnConfigType(BaseModel):
+class CustomColumnType(BaseModel):
     name = models.CharField(null=True, blank=True, max_length=255)
+    is_key = models.BooleanField(default=True)
+    slug = models.CharField(null=True, blank=True, max_length=255)
+    connection = models.ForeignKey(DBProviderConnection, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -42,12 +46,11 @@ class CustomColumnConfigType(BaseModel):
         return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
-        db_table = 'custom_column_config_type'
+        db_table = 'custom_column_type'
 
 
-class CustomColumnConfigTypeValidator(BaseModel):
-    custom_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
-                                                  blank=True)
+class CustomColumnTypeValidator(BaseModel):
+    custom_column_type = models.ForeignKey(CustomColumnType, on_delete=models.CASCADE, null=True, blank=True)
     custom_column_config_validation = models.ForeignKey(CustomColumnConfigValidation, on_delete=models.CASCADE,
                                                         null=True, blank=True)
     name = models.CharField(null=True, blank=True, max_length=255)
@@ -61,21 +64,4 @@ class CustomColumnConfigTypeValidator(BaseModel):
         return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
-        db_table = 'custom_column_config_type_validator'
-
-
-class CustomColumnType(BaseModel):
-    name = models.CharField(null=True, blank=True, max_length=255)
-    is_key = models.BooleanField(default=True)
-    custom_column_config_type = models.ForeignKey(CustomColumnConfigType, on_delete=models.CASCADE, null=True,
-                                                  blank=True)
-    slug = models.CharField(null=True, blank=True, max_length=255)
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        return super(BaseModel, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'custom_column_type'
+        db_table = 'custom_column_type_validator'
