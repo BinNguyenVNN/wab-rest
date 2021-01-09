@@ -65,3 +65,17 @@ class CustomColumnTypeValidator(BaseModel):
 
     class Meta:
         db_table = 'custom_column_type_validator'
+
+
+class CustomColumnMapping(models.Model):
+    connection = models.ForeignKey(DBProviderConnection, on_delete=models.CASCADE, null=True, blank=True)
+    table_name = models.CharField(null=True, blank=True, max_length=255)
+    real_column = models.CharField(null=True, blank=True, max_length=255)
+    custom_column_name = models.CharField(null=True, blank=True, max_length=255)
+    custom_column_id = models.ForeignKey(CustomColumnType, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return self.custom_column_name
+
+    class Meta:
+        db_table = 'custom_column_mapping'

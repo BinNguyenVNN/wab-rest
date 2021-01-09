@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
-    CustomColumnConfigValidation, CustomColumnTypeValidator
+    CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
 from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
 
 
@@ -110,3 +110,9 @@ class UpdateCustomColumnTypeSerializer(serializers.ModelSerializer):
         model = CustomColumnType
         fields = '__all__'
         lookup_field = "id"
+
+
+class CreateCustomColumnMappingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomColumnMapping
+        fields = '__all__'

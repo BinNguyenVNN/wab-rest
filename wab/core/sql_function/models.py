@@ -1,9 +1,8 @@
-from enum import Enum
-
 from django.db import models
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
+from wab.utils.operator import OPERATOR_MONGODB, MERGE_TYPE, RELATION
 
 
 class SqlFunction(BaseModel):
@@ -20,26 +19,15 @@ class SqlFunction(BaseModel):
         db_table = 'sql_function'
 
 
-class MERGE_TYPE(Enum):
-    inner_join = ('inner join', 'inner join')
-    left_join = ('left join', 'left join')
-    right_join = ('right join', 'right join')
-    right_outer_join = ('right outer join', 'right outer join')
-    union = ('union', 'union')
-
-    @classmethod
-    def get_value(cls, member):
-        return cls[member].value[0]
-
-
 class SqlFunctionMerge(BaseModel):
     table_name = models.CharField(null=True, blank=True, max_length=255)
+    column_name = models.CharField(null=True, blank=True, max_length=255)
     sql_function = models.ForeignKey(SqlFunction, on_delete=models.CASCADE, null=True, blank=True)
 
     merge_type = models.CharField(
         max_length=32,
         choices=[x.value for x in MERGE_TYPE],
-        default=MERGE_TYPE.get_value('inner_join'),
+        default=None,
         null=True,
         blank=True
     )
@@ -68,36 +56,17 @@ class SqlFunctionOrderBy(BaseModel):
         db_table = 'sql_function_order_by'
 
 
-class SqlFunctionCondition(BaseModel):
-    sql_function = models.ForeignKey(SqlFunction, on_delete=models.CASCADE, null=True, blank=True)
-
-    def __str__(self):
-        return self.sql_function.name
-
-    def save(self, *args, **kwargs):
-        return super(BaseModel, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'sql_function_condition'
-
-
-class RELATION(Enum):
-    relation_and = ('and', 'and')
-    relation_or = ('or', 'or')
-
-    @classmethod
-    def get_value(cls, member):
-        return cls[member].value[0]
-
-
-class OPERATOR(Enum):
-    type_equal = ('=', '=')
-    type_in = ('in', 'in')
-    type_contain = ('contain', 'contain')
-
-    @classmethod
-    def get_value(cls, member):
-        return cls[member].value[0]
+# class SqlFunctionCondition(BaseModel):
+#     sql_function = models.ForeignKey(SqlFunction, on_delete=models.CASCADE, null=True, blank=True)
+#
+#     def __str__(self):
+#         return self.sql_function.name
+#
+#     def save(self, *args, **kwargs):
+#         return super(BaseModel, self).save(*args, **kwargs)
+#
+#     class Meta:
+#         db_table = 'sql_function_condition'
 
 
 class SqlFunctionConditionItems(BaseModel):
@@ -106,8 +75,8 @@ class SqlFunctionConditionItems(BaseModel):
 
     operator = models.CharField(
         max_length=32,
-        choices=[x.value for x in OPERATOR],
-        default=OPERATOR.get_value('type_equal'),
+        choices=[x.value for x in OPERATOR_MONGODB],
+        default=None,
         null=True,
         blank=True
     )
@@ -121,7 +90,7 @@ class SqlFunctionConditionItems(BaseModel):
         blank=True
     )
 
-    sql_function_condition = models.ForeignKey(SqlFunctionCondition, on_delete=models.CASCADE, null=True, blank=True)
+    sql_function = models.ForeignKey(SqlFunction, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.relation

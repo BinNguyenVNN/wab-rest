@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from wab.core.custom_column.api.views import CustomColumnRegexTypeViewSet, CustomColumnTypeViewSet, \
     CustomColumnConfigValidationViewSet, CustomColumnTypeValidatorViewSet, \
-    UpdateCustomColumnTypeView
+    UpdateCustomColumnTypeView, CreateCustomColumnMappingView, UpdateCustomColumnMappingView
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -20,7 +20,10 @@ router.register("custom-column-type", CustomColumnTypeViewSet, basename="CustomC
 
 app_name = "custom-column"
 urlpatterns = [
-                  path('update-custom-column-type/<int:custom_column_type_id>',
-                       UpdateCustomColumnTypeView.as_view(),
-                       name='UpdateCustomColumnTypeView')
+                  path('update-custom-column-type/<int:custom_column_type_id>/', UpdateCustomColumnTypeView.as_view(),
+                       name='UpdateCustomColumnTypeView'),
+                  path('custom-column-mapping/', CreateCustomColumnMappingView.as_view(),
+                       name='CreateCustomColumnMappingView'),
+                  path('custom-column-mapping/<int:pk>/', UpdateCustomColumnMappingView.as_view(),
+                       name='UpdateCustomColumnMappingView'),
               ] + router.urls

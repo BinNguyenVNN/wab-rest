@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from wab.core.export_database.views import ExportPdfView, ExportExcelView, ExportTextView
 from wab.core.import_database.views import ImportCsvView
+from wab.core.views import ListOperatorView, ListJoinView, ListRelationView
 
 urlpatterns = [
     path("users/", include("wab.core.users.urls")),
@@ -15,5 +16,7 @@ urlpatterns = [
     path("import/csv/<int:connection>/<str:table_name>/", ImportCsvView.as_view(), name="import-csv"),
     path("notifications/", include("wab.core.notifications.urls")),
     path("sharing-files/", include("wab.core.sharing_files.urls")),
-
+    path("list-operator/", ListOperatorView.as_view(), name='list-operator'),
+    path("list-join/", ListJoinView.as_view(), name='list-operator'),
+path("list-relation/", ListRelationView.as_view(), name='list-relation'),
 ]

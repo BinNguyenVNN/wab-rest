@@ -83,17 +83,3 @@ class PreviewCustomColumnFKView(ListAPIView):
                 pass
         except Exception as err:
             return responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_FK_NOT_FOUND')
-
-
-class ListOperatorMongoDBView(ListAPIView):
-    authentication_classes = []
-    permission_classes = [AllowAny, ]
-    queryset = CustomColumnFK.objects.all()
-    serializer_class = SwaggerSerializer
-
-    def get(self, request, *args, **kwargs):
-        list_operator_mongodb = []
-        for x in OPERATOR_MONGODB:
-            list_operator_mongodb.append({"code": x.value[0], "name": x.value[1]})
-
-        return responses.ok(data=list_operator_mongodb, method=constant.GET, entity_name='custom_column_fk')

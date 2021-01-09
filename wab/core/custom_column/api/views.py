@@ -1,20 +1,21 @@
 from django.db import transaction
-from rest_framework.generics import UpdateAPIView
+from rest_framework.generics import UpdateAPIView, CreateAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
 from rest_framework.viewsets import GenericViewSet
 
 from wab.core.custom_column.api.serializers import CustomColumnRegexTypeSerializer, CustomColumnTypeSerializer, \
     CustomColumnConfigValidationSerializer, \
-    CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer
+    CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer, CreateCustomColumnMappingSerializer
 from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
-    CustomColumnConfigValidation, CustomColumnTypeValidator
+    CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
 from wab.utils import token_authentication, responses, constant
 from wab.utils.paginations import ResultsSetPagination
 
 
 class CustomColumnRegexTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                    DestroyModelMixin, GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = CustomColumnRegexTypeSerializer
     queryset = CustomColumnRegexType.objects.all()
     pagination_class = ResultsSetPagination
@@ -39,6 +40,7 @@ class CustomColumnRegexTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListMod
 
 class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                               DestroyModelMixin, GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = CustomColumnTypeSerializer
     queryset = CustomColumnType.objects.all()
     pagination_class = ResultsSetPagination
@@ -48,7 +50,7 @@ class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMix
         return self.queryset.all()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset().filter(connection__creator=request.user))
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         data_response = self.get_paginated_response(serializer.data)
@@ -63,6 +65,7 @@ class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMix
 
 class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                           DestroyModelMixin, GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = CustomColumnConfigValidationSerializer
     queryset = CustomColumnConfigValidation.objects.all()
     pagination_class = ResultsSetPagination
@@ -87,6 +90,7 @@ class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, 
 
 class CustomColumnTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
                                        DestroyModelMixin, GenericViewSet):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = CustomColumnTypeValidatorSerializer
     queryset = CustomColumnTypeValidator.objects.all()
     pagination_class = ResultsSetPagination
@@ -190,3 +194,36 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                                              message_code='UPDATE_CUSTOM_COLUMN_TYPE_HAS_ERROR')
         else:
             return responses.bad_request(data=None, message_code='UPDATE_CUSTOM_COLUMN_TYPE_INVALID')
+
+
+class CreateCustomColumnMappingView(CreateAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = CreateCustomColumnMappingSerializer
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return responses.ok(data=serializer.data, method=constant.POST,
+                            entity_name='custom_column_mapping')
+
+
+class UpdateCustomColumnMappingView(UpdateAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = CreateCustomColumnMappingSerializer
+    queryset = CustomColumnMapping.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        pk = kwargs.get('pk', None)
+        try:
+            data = request.data
+            partial = kwargs.pop('partial', False)
+            instance = CustomColumnMapping.objects.get(id=pk)
+            serializer = self.serializer_class(instance, data=data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return responses.ok(data=serializer.data, method=constant.PUT,
+                                entity_name='custom_column_mapping')
+        except Exception as err:
+            responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_MAPPING_NOT_FOUND')

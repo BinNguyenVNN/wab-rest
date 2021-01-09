@@ -3,12 +3,11 @@ from datetime import datetime
 
 import bson.objectid
 import pymongo
-from bson import Code
 from pymongo import MongoClient
 
-from wab.core.sql_function.models import SqlFunction, SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE
-from wab.utils import responses
-from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION, MONGO
+from wab.core.sql_function.models import SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE, \
+    SqlFunctionConditionItems
+from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
 from wab.utils.operator import OPERATOR_MONGODB
 
 
@@ -136,7 +135,7 @@ class MongoDBManager(object):
             return collection.find({})
 
     @staticmethod
-    def check_column_data_type(self, db, table, column):
+    def check_column_data_type(db, table, column):
         return db[table].aggregate(
 
             [
@@ -183,7 +182,7 @@ class MongoDBManager(object):
         count = documents.count()
         return documents, count
 
-    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by):
+    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by, page, page_size):
         if order_by is None:
             order_by = field_1
         list_match_and_tb1 = []
@@ -362,41 +361,56 @@ class MongoDBManager(object):
         ]
         return collection.aggregate(pipeline)
 
-    def sql_function_exe(self, collection_name, sql_function_id):
-        try:
-            sql_function = SqlFunction.objects.get(id=sql_function_id)
-            connection = sql_function.connection
-            provider = connection.connection
-            if provider.name == MONGO:
-                db, cache_db = self.connection_mongo_by_provider(connection)
-                collection = db[collection_name]
-                sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
-                if len(sql_function_merge):
-                    for index, merge in enumerate(sql_function_merge):
-                        table_name_first = merge.table_name
-                        merge_type = merge.merge_type
-                        if merge_type == MERGE_TYPE.left_join:
-                            merge_after = sql_function_merge[index + 1]
-                            table_name_second = merge_after.table_name
-                            # self.left_right_join(db=db, table_1=table_name_first, field_1=)
-                        elif merge_type == MERGE_TYPE.right_join:
-                            self.left_right_join()
-                        elif merge_type == MERGE_TYPE.inner_join:
-                            self.inner_join()
-                        elif merge_type == MERGE_TYPE.union:
-                            self.union()
-                        elif merge_type == MERGE_TYPE.right_outer_join:
-                            self.right_outer_join()
-                        else:
-                            pass
+    def right_outer_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
+        pass
 
-                    order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
-                else:
-                    return responses.bad_request(data='SQL error', message_code='MERGE_TYPE_ERROR')
+    def sql_function_exe(self, sql_function=None, db=None, page=1, page_size=20):
+        sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
+        order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
+        condition_items = SqlFunctionConditionItems.objects.filter(sql_function=sql_function)
+        if len(sql_function_merge) >= 2:
+            merge_type = MERGE_TYPE.left_join
+            table_name_first = None
+            column_name_first = None
+            table_name_second = None
+            column_name_second = None
+            for index, merge in enumerate(sql_function_merge):
+                table_name_first = merge.table_name
+                column_name_first = merge.column_name
+                merge_type = merge.merge_type
+                merge_after = sql_function_merge[index + 1]
+                table_name_second = merge_after.table_name
+                column_name_second = merge_after.column_name
+                break
+            if merge_type == MERGE_TYPE.left_join:
+                return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                            table_2=table_name_second, field_2=column_name_second,
+                                            order_by=order_bys, condition_items=condition_items,
+                                            page=page, page_size=page_size)
+            elif merge_type == MERGE_TYPE.right_join:
+                return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
+                                            table_2=table_name_first, field_2=column_name_first,
+                                            order_by=order_bys, condition_items=condition_items,
+                                            page=page, page_size=page_size)
+            elif merge_type == MERGE_TYPE.inner_join:
+                return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                       table_2=table_name_second, field_2=column_name_second,
+                                       order_by=order_bys, condition_items=condition_items,
+                                       page=page, page_size=page_size)
+            elif merge_type == MERGE_TYPE.union:
+                return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
+                                  table_2=table_name_second, field_2=column_name_second,
+                                  order_by=order_bys, condition_items=condition_items,
+                                  page=page, page_size=page_size)
+            elif merge_type == MERGE_TYPE.right_outer_join:
+                return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
+                                             table_2=table_name_second, field_2=column_name_second,
+                                             order_by=order_bys, condition_items=condition_items,
+                                             page=page, page_size=page_size)
             else:
-                pass
-        except Exception as err:
-            return responses.bad_request(data=str(err), message_code='SQL_ERROR')
+                return None
+        else:
+            return None
 
 
 class PostgresManager(object):

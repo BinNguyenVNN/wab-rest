@@ -8,24 +8,26 @@ from rest_framework.permissions import AllowAny
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
 from wab.core.sql_function.api.serializers import SqlFunctionSerializer
-from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionCondition, \
-    SqlFunctionConditionItems
+from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionConditionItems
 from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
+from wab.utils.paginations import ResultsSetPagination
 
 
 class SqlFunctionListView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    pagination_class = ResultsSetPagination
     serializer_class = SqlFunctionSerializer
+    queryset = SqlFunction.objects.all()
 
-    def get(self, request, *args, **kwargs):
-        try:
-            sql_functions = SqlFunction.objects.all()
-            serializer = self.get_serializer(sql_functions, many=True)
-            return responses.ok(data=serializer.data, method=constant.GET, entity_name='sql-function')
-        except Exception as err:
-            return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset().filter(connection__creator=request.user))
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        data_response = self.get_paginated_response(serializer.data)
+        return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
+                                method=constant.GET, entity_name='sql-function')
 
 
 class SqlFunctionCreateView(CreateAPIView):
@@ -62,17 +64,17 @@ class SqlFunctionCreateView(CreateAPIView):
                         sql_function=sql_function
                     )
 
-                # Create SqlFunctionCondition
-                sql_function_condition = SqlFunctionCondition.objects.create(
-                    sql_function=sql_function
-                )
+                # # Create SqlFunctionCondition
+                # sql_function_condition = SqlFunctionCondition.objects.create(
+                #     sql_function=sql_function
+                # )
 
                 # Create SqlFunctionConditionItems
                 for sql_function_condition_item in sql_function_condition_items:
                     SqlFunctionConditionItems.objects.create(
                         table_name=sql_function_condition_item.get("table_name"),
                         field_name=sql_function_condition_item.get("field_name"),
-                        sql_function_condition=sql_function_condition,
+                        sql_function=sql_function,
                         value=sql_function_condition_item.get("value"),
                         operator=sql_function_condition_item.get("operator"),
                         relation=sql_function_condition_item.get("relation")
@@ -100,7 +102,6 @@ class SqlFunctionUpdateView(UpdateAPIView):
         sql_function_order_by_id = data.get("sql_function_order_by_id")
         order_by_name = data.get("order_by_name")
         sql_function_merges = data.get("sql_function_merges")
-        # sql_function_condition_id = data.get("sql_function_condition_id")
         sql_function_condition_items = data.get("sql_function_condition_items")
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
@@ -154,39 +155,47 @@ class SqlFunctionDeleteView(DestroyAPIView):
         sql_function_id = kwargs.get("pk")
         try:
             sql_function = self.get_queryset().get(id=sql_function_id)
-
             # Delete SqlFunctionOrderBy
-            sql_function_order_bys = SqlFunctionOrderBy.objects.all()
-            for sql_function_order_by in sql_function_order_bys:
-                sql_function_order_by.delete()
-
+            sql_function_order_bys = SqlFunctionOrderBy.objects.filter(sql_function__id=sql_function_id).delete()
             # Delete SqlFunctionMerge
-            sql_function_merges = SqlFunctionMerge.objects.filter(sql_function__id=sql_function_id)
-            for sql_function_merge in sql_function_merges:
-                sql_function_merge.delete()
-
-            sql_function_conditions = SqlFunctionCondition.objects.filter(sql_function__id=sql_function_id)
-            sql_function_condition = None
-            for item in sql_function_conditions:
-                sql_function_condition = item
-                break
-
-            # Delete SqlFunctionConditionItems
-            if sql_function_condition is not None:
-                sql_function_condition_items = SqlFunctionConditionItems.objects.filter(
-                    sql_function_condition__id=sql_function_condition.id)
-                for sql_function_condition_item in sql_function_condition_items:
-                    sql_function_condition_item.delete()
-
-                # Delete SqlFunctionCondition
-                sql_function_condition.delete()
-
+            SqlFunctionMerge.objects.filter(sql_function__id=sql_function_id).delete()
+            SqlFunctionConditionItems.objects.filter(sql_function_id=sql_function_id).delete()
             # Delete SqlFunction
             sql_function.delete()
 
             return responses.ok(data=None, method=constant.DELETE, entity_name='sql-function')
         except Exception as err:
             return responses.bad_request(data=str(err), message_code='DELETE_SQL_FUNCTION_HAS_ERROR')
+
+
+class PreviewSqlFunctionView(ListAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = SqlFunction.objects.all()
+    pagination_class = ResultsSetPagination
+    serializer_class = SwaggerSerializer
+
+    def list(self, request, *args, **kwargs):
+        sql_function_id = kwargs.get('pk', None)
+        page = request.GET.get('page', 1)
+        page_size = request.GET.get('page_size', 20)
+        try:
+            mongo_db_manager = MongoDBManager()
+            sql_function = SqlFunction.objects.get(id=sql_function_id)
+            connection = sql_function.connection
+            if connection.name == MONGO:
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                    provider_connection=connection)
+                documents, count = mongo_db_manager.sql_function_exe(sql_function=sql_function, db=db, page=page,
+                                                                     page_size=page_size)
+
+                data = list(documents)
+                result = json.loads(dumps(data))
+                return responses.paging_data(data=result, total_count=count, method=constant.GET,
+                                             entity_name='db_provider_connection')
+            else:
+                return responses.ok(data=None, method=constant.GET, entity_name='sql_function')
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='SQL_ERROR')
 
 
 class SqlJoinViewTest(ListAPIView):

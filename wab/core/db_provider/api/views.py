@@ -182,11 +182,10 @@ class DBConnectionListDataView(ListAPIView):
                     try:
                         db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                             provider_connection=provider_connection)
-                        documents1, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
+                        documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                               column_sort=column_sort,
                                                                               sort=sort, page=page, page_size=page_size)
 
-                        documents = mongo_db_manager.check_column_data_type(db=db, table=table_name)
                         data = list(documents)
                         result = json.loads(dumps(data))
                         return responses.paging_data(data=result, total_count=count, method=constant.POST,
