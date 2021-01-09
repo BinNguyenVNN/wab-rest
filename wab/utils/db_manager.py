@@ -367,6 +367,9 @@ class MongoDBManager(object):
     def sql_function_exe(self, sql_function=None, db=None, page=1, page_size=20):
         sql_function_merge = SqlFunctionMerge.objects.filter(sql_function=sql_function)
         order_bys = SqlFunctionOrderBy.objects.filter(sql_function=sql_function)
+        order_by = None
+        if order_bys.exists():
+            order_by = order_bys.first().order_by_name
         condition_items = SqlFunctionConditionItems.objects.filter(sql_function=sql_function)
         if len(sql_function_merge) >= 2:
             merge_type = MERGE_TYPE.left_join
@@ -385,27 +388,27 @@ class MongoDBManager(object):
             if merge_type == MERGE_TYPE.left_join:
                 return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                             table_2=table_name_second, field_2=column_name_second,
-                                            order_by=order_bys, condition_items=condition_items,
+                                            order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
             elif merge_type == MERGE_TYPE.right_join:
                 return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
                                             table_2=table_name_first, field_2=column_name_first,
-                                            order_by=order_bys, condition_items=condition_items,
+                                            order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
             elif merge_type == MERGE_TYPE.inner_join:
                 return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                        table_2=table_name_second, field_2=column_name_second,
-                                       order_by=order_bys, condition_items=condition_items,
+                                       order_by=order_by, condition_items=condition_items,
                                        page=page, page_size=page_size)
             elif merge_type == MERGE_TYPE.union:
                 return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
                                   table_2=table_name_second, field_2=column_name_second,
-                                  order_by=order_bys, condition_items=condition_items,
+                                  order_by=order_by, condition_items=condition_items,
                                   page=page, page_size=page_size)
             elif merge_type == MERGE_TYPE.right_outer_join:
                 return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                              table_2=table_name_second, field_2=column_name_second,
-                                             order_by=order_bys, condition_items=condition_items,
+                                             order_by=order_by, condition_items=condition_items,
                                              page=page, page_size=page_size)
             else:
                 return None

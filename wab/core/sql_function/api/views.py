@@ -37,11 +37,11 @@ class SqlFunctionCreateView(CreateAPIView):
     @transaction.atomic()
     def post(self, request, *args, **kwargs):
         data = request.data
-        name = data.get("name")
-        connection = data.get("connection")
-        order_by_name = data.get("order_by_name")
-        sql_function_merges = data.get("sql_function_merges")
-        sql_function_condition_items = data.get("sql_function_condition_items")
+        name = data.get('name')
+        connection = data.get('connection')
+        order_by_name = data.get('order_by_name')
+        sql_function_merges = data.get('sql_function_merges')
+        sql_function_condition_items = data.get('sql_function_condition_items')
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
@@ -59,8 +59,9 @@ class SqlFunctionCreateView(CreateAPIView):
                 # Create SqlFunctionMerge
                 for sql_function_merge in sql_function_merges:
                     SqlFunctionMerge.objects.create(
-                        table_name=sql_function_merge.get("table_name"),
-                        merge_type=sql_function_merge.get("merge_type"),
+                        table_name=sql_function_merge.get('table_name'),
+                        column_name=sql_function_merge.get('column_name'),
+                        merge_type=sql_function_merge.get('merge_type'),
                         sql_function=sql_function
                     )
 
@@ -72,12 +73,12 @@ class SqlFunctionCreateView(CreateAPIView):
                 # Create SqlFunctionConditionItems
                 for sql_function_condition_item in sql_function_condition_items:
                     SqlFunctionConditionItems.objects.create(
-                        table_name=sql_function_condition_item.get("table_name"),
-                        field_name=sql_function_condition_item.get("field_name"),
+                        table_name=sql_function_condition_item.get('table_name'),
+                        field_name=sql_function_condition_item.get('field_name'),
                         sql_function=sql_function,
-                        value=sql_function_condition_item.get("value"),
-                        operator=sql_function_condition_item.get("operator"),
-                        relation=sql_function_condition_item.get("relation")
+                        value=sql_function_condition_item.get('value'),
+                        operator=sql_function_condition_item.get('operator'),
+                        relation=sql_function_condition_item.get('relation')
                     )
 
                 return responses.ok(data=serializer_sql_function.data, method=constant.POST, entity_name='sql-function')
@@ -95,14 +96,14 @@ class SqlFunctionUpdateView(UpdateAPIView):
 
     @transaction.atomic()
     def put(self, request, *args, **kwargs):
-        sql_function_id = kwargs.get("pk")
+        sql_function_id = kwargs.get('pk')
         data = request.data
-        name = data.get("name")
-        connection = data.get("connection")
-        sql_function_order_by_id = data.get("sql_function_order_by_id")
-        order_by_name = data.get("order_by_name")
-        sql_function_merges = data.get("sql_function_merges")
-        sql_function_condition_items = data.get("sql_function_condition_items")
+        name = data.get('name')
+        connection = data.get('connection')
+        sql_function_order_by_id = data.get('sql_function_order_by_id')
+        order_by_name = data.get('order_by_name')
+        sql_function_merges = data.get('sql_function_merges')
+        sql_function_condition_items = data.get('sql_function_condition_items')
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
@@ -123,20 +124,21 @@ class SqlFunctionUpdateView(UpdateAPIView):
 
                 # Update SqlFunctionMerge
                 for item in sql_function_merges:
-                    sql_function_merge = SqlFunctionMerge.objects.get(id=item.get("sql_function_merge_id"))
-                    sql_function_merge.table_name = item.get("table_name")
-                    sql_function_merge.merge_type = item.get("merge_type")
+                    sql_function_merge = SqlFunctionMerge.objects.get(id=item.get('sql_function_merge_id'))
+                    sql_function_merge.table_name = item.get('table_name')
+                    sql_function_merge.merge_type = item.get('merge_type')
+                    sql_function_merge.column_name = item.get('column_name'),
                     sql_function_merge.save()
 
                 # Update SqlFunctionConditionItems
                 for item in sql_function_condition_items:
                     sql_function_condition_item = SqlFunctionConditionItems.objects.get(
-                        id=item.get("sql_function_condition_item_id"))
-                    sql_function_condition_item.table_name = item.get("table_name")
-                    sql_function_condition_item.field_name = item.get("field_name")
-                    sql_function_condition_item.value = item.get("value")
-                    sql_function_condition_item.operator = item.get("operator")
-                    sql_function_condition_item.relation = item.get("relation")
+                        id=item.get('sql_function_condition_item_id'))
+                    sql_function_condition_item.table_name = item.get('table_name')
+                    sql_function_condition_item.field_name = item.get('field_name')
+                    sql_function_condition_item.value = item.get('value')
+                    sql_function_condition_item.operator = item.get('operator')
+                    sql_function_condition_item.relation = item.get('relation')
                     sql_function_condition_item.save()
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
@@ -152,7 +154,7 @@ class SqlFunctionDeleteView(DestroyAPIView):
 
     @transaction.atomic()
     def delete(self, request, *args, **kwargs):
-        sql_function_id = kwargs.get("pk")
+        sql_function_id = kwargs.get('pk')
         try:
             sql_function = self.get_queryset().get(id=sql_function_id)
             # Delete SqlFunctionOrderBy
@@ -211,40 +213,40 @@ class SqlJoinViewTest(ListAPIView):
             if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
-                collection = db["order_items"]
+                collection = db['order_items']
                 pipeline = [
-                    {"$limit": 20},
-                    {"$skip": 0},
-                    {"$project": {"_id": 0}},
+                    {'$limit': 20},
+                    {'$skip': 0},
+                    {'$project': {'_id': 0}},
                     {
-                        "$lookup": {
-                            "from": "order_reviews",
-                            "localField": "order_id",
-                            "foreignField": "order_id",
-                            "as": "data",
+                        '$lookup': {
+                            'from': 'order_reviews',
+                            'localField': 'order_id',
+                            'foreignField': 'order_id',
+                            'as': 'data',
                         },
                     },
                     {
-                        "$unwind": {
-                            "path": "$data",
-                            "preserveNullAndEmptyArrays": False
+                        '$unwind': {
+                            'path': '$data',
+                            'preserveNullAndEmptyArrays': False
                         }
                     },
-                    # {"$group": {
-                    #     "_id": "$_id",
-                    #     "data": {"$push": "$data"},
+                    # {'$group': {
+                    #     '_id': '$_id',
+                    #     'data': {'$push': '$data'},
                     # }},
-                    # {"$match": {
-                    #     "$and": [
-                    #         {"order_id": "a548910a1c6147796b98fdf73dbeba33"},
-                    #         {"data.review_id": "80e641a11e56f04c1ad469d5645fdfde"}
+                    # {'$match': {
+                    #     '$and': [
+                    #         {'order_id': 'a548910a1c6147796b98fdf73dbeba33'},
+                    #         {'data.review_id': '80e641a11e56f04c1ad469d5645fdfde'}
                     #     ]}},
-                    {"$sort": {"order_id": -1}},
+                    {'$sort': {'order_id': -1}},
                     {
-                        "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                        '$replaceRoot': {'newRoot': {'$mergeObjects': ['$data', '$$ROOT']}}
                     },
                     {
-                        "$project": {"data": 0, "_id": 0}
+                        '$project': {'data': 0, '_id': 0}
                     }
 
                 ]
@@ -267,51 +269,51 @@ class SqlUnionViewTest(ListAPIView):
             if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
-                collection = db["order_items"]
+                collection = db['order_items']
 
                 pipeline = [
-                    {"$limit": 1},  # Reduce the result set to a single document.
-                    {"$project": {"_id": 1}},  # Strip all fields except the Id.
-                    {"$project": {"_id": 0}},  # Strip the id. The document is now empty.
-                    {"$lookup": {
-                        "from": "order_items",
-                        "pipeline": [
-                            {"$match": {
-                                # "date": {"$gte": ISODate("2018-09-01"), "$lte": ISODate("2018-09-10")},
-                                # "order_id": "a548910a1c6147796b98fdf73dbeba33"
-                                # "price": {"$lte": {"$toInt":"810"}}
-                                "order_item_id": "1"
+                    {'$limit': 1},  # Reduce the result set to a single document.
+                    {'$project': {'_id': 1}},  # Strip all fields except the Id.
+                    {'$project': {'_id': 0}},  # Strip the id. The document is now empty.
+                    {'$lookup': {
+                        'from': 'order_items',
+                        'pipeline': [
+                            {'$match': {
+                                # 'date': {'$gte': ISODate('2018-09-01'), '$lte': ISODate('2018-09-10')},
+                                # 'order_id': 'a548910a1c6147796b98fdf73dbeba33'
+                                # 'price': {'$lte': {'$toInt':'810'}}
+                                'order_item_id': '1'
                             }
                             },
-                            {"$project": {
-                                "_id": 0, "result": "$price"
+                            {'$project': {
+                                '_id': 0, 'result': '$price'
                             }}
                         ],
-                        "as": "collection1"
+                        'as': 'collection1'
                     }},
-                    {"$lookup": {
-                        "from": "order_reviews",
-                        "pipeline": [
-                            {"$match": {
-                                # "order_id": "a548910a1c6147796b98fdf73dbeba33",
-                                "review_score": "5"
+                    {'$lookup': {
+                        'from': 'order_reviews',
+                        'pipeline': [
+                            {'$match': {
+                                # 'order_id': 'a548910a1c6147796b98fdf73dbeba33',
+                                'review_score': '5'
                             }
                             },
-                            {"$project": {
-                                "_id": 0, "result": "$review_score"
+                            {'$project': {
+                                '_id': 0, 'result': '$review_score'
                             }}
                         ],
 
-                        "as": "collection2"
+                        'as': 'collection2'
                     }},
-                    {"$project": {
-                        "Union": {"$setUnion": ["$collection1", "$collection2"]}
+                    {'$project': {
+                        'Union': {'$setUnion': ['$collection1', '$collection2']}
                     }},
-                    {"$unwind": "$Union"},  # Unwind the union collection into a result set.
-                    {"$replaceRoot": {"newRoot": "$Union"}},  # Replace the root to cleanup the resulting documents.
-                    # {"$limit": 20},
-                    # {"$skip": 2*20},
-                    # {"$sort": {"dated": -1}}
+                    {'$unwind': '$Union'},  # Unwind the union collection into a result set.
+                    {'$replaceRoot': {'newRoot': '$Union'}},  # Replace the root to cleanup the resulting documents.
+                    # {'$limit': 20},
+                    # {'$skip': 2*20},
+                    # {'$sort': {'dated': -1}}
                 ]
                 c = collection.aggregate(pipeline)
                 page = 1
@@ -322,5 +324,5 @@ class SqlUnionViewTest(ListAPIView):
                 end_length = page_size if page == 1 else page * page_size + 1
                 print(start_length)
                 print(end_length)
-                return responses.ok(data={"count": len(result), "result": result[start_length:end_length]},
+                return responses.ok(data={'count': len(result), 'result': result[start_length:end_length]},
                                     method=constant.GET, entity_name='sql_function')
