@@ -26,5 +26,5 @@ urlpatterns = [
                        name='CreateCustomColumnMappingView'),
                   path('custom-column-mapping/<int:pk>/', UpdateCustomColumnMappingView.as_view(),
                        name='UpdateCustomColumnMappingView'),
-                  path("convert/", ConvertData.as_view(), name='ConvertData')
+                  path("convert/", ConvertData.as_view(), name='ConvertData'),
               ] + router.urls

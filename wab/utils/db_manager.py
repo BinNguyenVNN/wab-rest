@@ -5,6 +5,7 @@ import bson.objectid
 import pymongo
 from pymongo import MongoClient, UpdateOne
 
+from wab.core.custom_column.models import CustomColumnTaskConvert
 from wab.core.sql_function.models import SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE, \
     SqlFunctionConditionItems
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
@@ -153,7 +154,7 @@ class MongoDBManager(object):
         # result = db[table].map_reduce(map, reduce, "result")
         # return result
 
-    def update_convert_column_data_type(self, db, table, column, data_type):
+    def update_convert_column_data_type(self, db, table, column, data_type, provider_connection_id):
         real_data_type = self.check_column_data_type(db, table, column)
         if real_data_type == data_type:
             return True
@@ -163,21 +164,31 @@ class MongoDBManager(object):
             if r_name:
                 operations = []
                 collection = db[table]
-                for doc in collection.find({column: {"$exists": True, "$type": value}}):
-                    # Set a random number on every document update
-                    operations.append(
-                        UpdateOne({"_id": doc["_id"]},
-                                  # {'$set': {column: {'$convert': {'input': doc.get(column), 'to': r_name}}}})
-                                  {"$set": {column: self.convert_column_data_type(doc.get(column), r_name)}})
+                list_doc = collection.find({column: {"$exists": True, "$type": value}})
+                if list_doc.count() > 1000:
+                    CustomColumnTaskConvert.objects.create(
+                        connection_id=provider_connection_id,
+                        table_name=table,
+                        column_name=column,
+                        data_real_type=name,
+                        data_type=data_type,
+                        current_row=0
                     )
+                else:
+                    for doc in list_doc:
+                        # Set a random number on every document update
+                        operations.append(
+                            UpdateOne({"_id": doc["_id"]},
+                                      # {'$set': {column: {'$convert': {'input': doc.get(column), 'to': r_name}}}})
+                                      {"$set": {column: self.convert_column_data_type(doc.get(column), r_name)}})
+                        )
 
-                    # Send once every 1000 in batch
-                    if len(operations) == 1000:
+                        # Send once every 1000 in batch
                         collection.bulk_write(operations, ordered=False)
                         operations = []
 
-                if len(operations) > 0:
-                    collection.bulk_write(operations, ordered=False)
+                    if len(operations) > 0:
+                        collection.bulk_write(operations, ordered=False)
             return True
 
     def convert_column_data_type(self, value, parse_to_type):

@@ -79,3 +79,12 @@ class CustomColumnMapping(models.Model):
 
     class Meta:
         db_table = 'custom_column_mapping'
+
+
+class CustomColumnTaskConvert(models.Model):
+    connection = models.ForeignKey(DBProviderConnection, on_delete=models.CASCADE, null=True, blank=True)
+    table_name = models.CharField(null=True, blank=True, max_length=255)
+    column_name = models.CharField(null=True, blank=True, max_length=255)
+    data_real_type = models.CharField(null=True, blank=True, max_length=255)
+    data_type = models.CharField(null=True, blank=True, max_length=255)
+    current_row = models.IntegerField(default=0)
