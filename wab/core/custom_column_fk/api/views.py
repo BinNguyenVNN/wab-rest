@@ -79,7 +79,9 @@ class CustomColumnFKUpdateView(UpdateAPIView):
         connection_id = data.get("connection_id")
         name = data.get("name")
         table_name = data.get("table_name")
-        custom_column_fk_filter_list = data.get("custom_column_fk_filter_list")
+        custom_column_fk_filter_create_list = data.get("custom_column_fk_filter_create_list")
+        custom_column_fk_filter_update_list = data.get("custom_column_fk_filter_update_list")
+        custom_column_fk_filter_delete_list = data.get("custom_column_fk_filter_delete_list")
         serializer_custom_column_fk = self.get_serializer(data=data)
         if serializer_custom_column_fk.is_valid(raise_exception=True):
             try:
@@ -95,12 +97,12 @@ class CustomColumnFKUpdateView(UpdateAPIView):
                 serializer_custom_column_fk = self.get_serializer(custom_column_fk)
 
                 # Delete custom_column_fk_filter_list
-                for item in custom_column_fk_filter_list:
+                for item in custom_column_fk_filter_delete_list:
                     custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item)
                     custom_column_fk_filter.delete()
 
                 # Update custom_column_fk_filter_list
-                for item in custom_column_fk_filter_list:
+                for item in custom_column_fk_filter_update_list:
                     custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item.get('custom_column_fk_filter_id'))
                     custom_column_fk_filter.field_name = item.get('field_name')
                     custom_column_fk_filter.operator = item.get('operator')
@@ -108,7 +110,7 @@ class CustomColumnFKUpdateView(UpdateAPIView):
                     custom_column_fk_filter.save()
 
                 # Create Custom_Column_Filter
-                for custom_column_filter in custom_column_fk_filter_list:
+                for custom_column_filter in custom_column_fk_filter_create_list:
                     CustomColumnFKFilter.objects.create(
                         field_name=custom_column_filter.get('field_name'),
                         operator=custom_column_filter.get('operator'),
