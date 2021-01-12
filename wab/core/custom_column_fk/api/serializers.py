@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
-from wab.core.custom_column_fk.models import CustomColumnFK
+from wab.core.custom_column_fk.models import CustomColumnFK, CustomColumnFKFilter
 from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
+
+
+class CustomColumnFKFilterSerializer(serializers.ModelSerializer):
+    model = CustomColumnFKFilter
+    fields = '__all__'
 
 
 class CustomColumnFKSerializer(serializers.ModelSerializer):
@@ -16,6 +21,7 @@ class CustomColumnFKSerializer(serializers.ModelSerializer):
 
     def get_connection_id(self, obj):
         return obj.connection_id
+
 
     class Meta:
         model = CustomColumnFK
