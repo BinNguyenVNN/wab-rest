@@ -1,6 +1,9 @@
 import csv
+import datetime
 from io import StringIO
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from rest_framework.generics import CreateAPIView
 from rest_framework.parsers import FileUploadParser
 
@@ -21,6 +24,7 @@ class ImportCsvView(CreateAPIView):
         try:
             user = request.user
             file_obj = request.FILES['file']
+            # url_csv = upload_to_s3("import", file_obj.name, file_obj, user_id=user.id)
 
             file = file_obj.read().decode('utf-8')
             csv_data = csv.DictReader(StringIO(file))
@@ -47,24 +51,29 @@ class ImportCsvView(CreateAPIView):
                     except Exception as err:
                         return responses.bad_request(data=str(err), message_code=str(err))
 
-                list_insert = []
-                for row in csv_data:
-                    data = dict(row)
-                    # data["_id"] = str(ObjectId())
-                    list_insert.append(data)
+                # list_insert = []
+                # for row in csv_data:
+                #     data = dict(row)
+                #     # data["_id"] = str(ObjectId())
+                #     list_insert.append(data)
+                #
+                # print(list_insert)
 
-                print(list_insert)
-                # insert = table.insert_many(list_insert)
-                # response_id = []
-                # for ids in insert.inserted_ids:
-                #     response_id.append(str(ids))
+                file_full_name = file_obj.name.split(".")
+                time_stamp = datetime.datetime.now().timestamp()
+                file_name = f"{file_full_name[0]}_{str(int(time_stamp))}.{file_full_name[1]}"
 
-                # print(response_id)
+                fs = FileSystemStorage()
+                filename = fs.save(file_name, file_obj)
+                uploaded_file_url = fs.url(filename)
+
+                static_dir = f"{settings.MEDIA_ROOT}\{filename}"
+
                 ImportData.objects.create(
                     provider_connection_id=connection.id,
                     username=user.username,
                     table=table_name,
-                    record=list_insert
+                    file_url=static_dir
                 )
 
                 return responses.ok(data="waiting import data", method='post', entity_name='import_database')
@@ -72,3 +81,5 @@ class ImportCsvView(CreateAPIView):
 
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
+
+

@@ -9,7 +9,7 @@ class ImportData(models.Model):
     provider_connection = models.ForeignKey(DBProviderConnection, on_delete=models.CASCADE)
     username = models.CharField(max_length=128, blank=True, null=True)
     table = models.CharField(max_length=128, blank=True, null=True)
-    record = ArrayField(JSONField(blank=True, null=True), blank=True, null=True, default=list)
+    file_url = models.CharField(max_length=128, blank=True, null=True)
 
     class Meta:
         db_table = 'import_data'

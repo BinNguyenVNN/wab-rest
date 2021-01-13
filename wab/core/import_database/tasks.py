@@ -10,6 +10,8 @@ def process_import_database():
     from wab.utils.db_manager import MongoDBManager
     from wab.core.notifications.models import PUSH_NOTIFICATION, NOTIFY
     from bson import ObjectId
+    import csv
+    import os
 
     default_length = 20
     import_data = ImportData.objects.all()
@@ -19,16 +21,19 @@ def process_import_database():
             connection = DBProviderConnection.objects.filter(id=data.provider_connection.id).first()
             mongo_db_manager = MongoDBManager()
             db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
-            collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
-            if table_name not in collections:
-                # table_name ko tồn tại, pass
-                continue
+            # collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
+            # if table_name not in collections:
+            #     # table_name ko tồn tại, pass
+            #     continue
             table = db[table_name]
 
-            if len(data.record) > default_length:
-                records = data.record[:default_length]
-            else:
-                records = data.record
+            max_records = []
+            with open(data.file_url, mode='r') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for row in csv_reader:
+                    max_records.append(row)
+
+            records = max_records[:default_length]
 
             for i in range(len(records)):
                 row = records[i]
@@ -40,10 +45,17 @@ def process_import_database():
                 response_id.append(str(ids))
             print(response_id)
 
-            new_record = data.record[default_length:]
-            data.record = new_record
-            if len(data.record) > 0:
-                data.save()
+            new_record = max_records[default_length:]
+
+            if len(new_record) > 0:
+                file = open(data.file_url, 'w')
+                with file:
+                    header = new_record[0].keys()
+                    writer = csv.DictWriter(file, fieldnames=header)
+                    writer.writeheader()
+                    for r in new_record:
+                        writer.writerow(r)
+
             else:
                 payload_single = {
                     "channel": PUSH_NOTIFICATION,
@@ -57,4 +69,6 @@ def process_import_database():
                 }
                 notify_service = NotificationsService()
                 notify_service.process_push_single_notification(data=payload_single)
+
+                os.remove(data.file_url)
                 data.delete()

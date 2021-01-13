@@ -7,7 +7,8 @@ from datetime import timedelta
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
-app = Celery("wab", include=["wab.core.notifications.tasks", "wab.core.import_database.tasks"])
+app = Celery("wab", include=["wab.core.notifications.tasks", "wab.core.import_database.tasks",
+                             "wab.core.custom_column.tasks"])
 
 app.conf.update(
     CELERY_TASK_SERIALIZER='json',
@@ -23,6 +24,10 @@ app.conf.update(
         'import_database': {
             'task': 'wab.core.import_database.tasks.process_import_database',
             'schedule': timedelta(seconds=5),
+        },
+        'convert_data': {
+            'task': 'wab.core.custom_column.tasks.process_convert_data',
+            'schedule': timedelta(seconds=15),
         }
     }
 )
