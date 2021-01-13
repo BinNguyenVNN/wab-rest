@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework.generics import UpdateAPIView, CreateAPIView
+from rest_framework.generics import UpdateAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin, CreateModelMixin, \
     DestroyModelMixin
 from rest_framework.permissions import AllowAny
@@ -138,57 +138,60 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                 custom_column_type.save()
 
                 # Delete List Custom_Column_Config_Type_Validator
-                for deleted_item in custom_column_type_validator_delete_list:
-                    deleted_validator = CustomColumnTypeValidator.objects.get(id=deleted_item)
-                    deleted_validator.delete()
+                if custom_column_type_validator_delete_list is not None:
+                    for deleted_item in custom_column_type_validator_delete_list:
+                        deleted_validator = CustomColumnTypeValidator.objects.get(id=deleted_item)
+                        deleted_validator.delete()
 
                 # Update List Custom_Column_Config_Type_Validator
-                for updated_item in custom_column_type_validator_update_list:
-                    updated_validator_id = updated_item.get("custom_column_config_type_validator_id")
-                    updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
-                    updated_validator.custom_column_type = custom_column_type
+                if custom_column_type_validator_update_list is not None:
+                    for updated_item in custom_column_type_validator_update_list:
+                        updated_validator_id = updated_item.get("custom_column_config_type_validator_id")
+                        updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
+                        updated_validator.custom_column_type = custom_column_type
 
-                    custom_column_config_validation_id = updated_item.get("custom_column_config_validation_id")
-                    if custom_column_config_validation_id is not None:
-                        custom_column_config_validation = CustomColumnConfigValidation.objects.get(
-                            id=custom_column_config_validation_id)
-                        updated_validator.custom_column_config_validation = custom_column_config_validation
-                    else:
-                        updated_validator.custom_column_config_validation = None
+                        custom_column_config_validation_id = updated_item.get("custom_column_config_validation_id")
+                        if custom_column_config_validation_id is not None:
+                            custom_column_config_validation = CustomColumnConfigValidation.objects.get(
+                                id=custom_column_config_validation_id)
+                            updated_validator.custom_column_config_validation = custom_column_config_validation
+                        else:
+                            updated_validator.custom_column_config_validation = None
 
-                    updated_validator.value = updated_item.get("value")
+                        updated_validator.value = updated_item.get("value")
 
-                    custom_column_regex_type_id = updated_item.get("custom_column_regex_type_id")
-                    if custom_column_regex_type_id is not None:
-                        custom_column_regex_type = CustomColumnRegexType.objects.get(
-                            id=custom_column_regex_type_id)
-                        updated_validator.custom_column_regex_type = custom_column_regex_type
-                    else:
-                        updated_validator.custom_column_regex_type = None
-                    updated_validator.save()
+                        custom_column_regex_type_id = updated_item.get("custom_column_regex_type_id")
+                        if custom_column_regex_type_id is not None:
+                            custom_column_regex_type = CustomColumnRegexType.objects.get(
+                                id=custom_column_regex_type_id)
+                            updated_validator.custom_column_regex_type = custom_column_regex_type
+                        else:
+                            updated_validator.custom_column_regex_type = None
+                        updated_validator.save()
 
                 # Create List Custom_Column_Config_Type_Validator
-                for created_item in custom_column_type_validator_create_list:
-                    custom_column_config_validation_id = created_item.get("custom_column_config_validation_id")
-                    if custom_column_config_validation_id is not None:
-                        custom_column_config_validation = CustomColumnConfigValidation.objects.get(
-                            id=custom_column_config_validation_id)
-                    else:
-                        custom_column_config_validation = None
+                if custom_column_type_validator_create_list is not None:
+                    for created_item in custom_column_type_validator_create_list:
+                        custom_column_config_validation_id = created_item.get("custom_column_config_validation_id")
+                        if custom_column_config_validation_id is not None:
+                            custom_column_config_validation = CustomColumnConfigValidation.objects.get(
+                                id=custom_column_config_validation_id)
+                        else:
+                            custom_column_config_validation = None
 
-                    custom_column_regex_type_id = created_item.get("custom_column_regex_type_id")
-                    if custom_column_regex_type_id is not None:
-                        custom_column_regex_type = CustomColumnRegexType.objects.get(
-                            id=custom_column_regex_type_id)
-                    else:
-                        custom_column_regex_type = None
+                        custom_column_regex_type_id = created_item.get("custom_column_regex_type_id")
+                        if custom_column_regex_type_id is not None:
+                            custom_column_regex_type = CustomColumnRegexType.objects.get(
+                                id=custom_column_regex_type_id)
+                        else:
+                            custom_column_regex_type = None
 
-                    CustomColumnTypeValidator.objects.create(
-                        custom_column_type=custom_column_type,
-                        custom_column_config_validation=custom_column_config_validation,
-                        value=created_item.get("value"),
-                        custom_column_regex_type=custom_column_regex_type
-                    )
+                        CustomColumnTypeValidator.objects.create(
+                            custom_column_type=custom_column_type,
+                            custom_column_config_validation=custom_column_config_validation,
+                            value=created_item.get("value"),
+                            custom_column_regex_type=custom_column_regex_type
+                        )
 
                 serializer_config_type = self.get_serializer(custom_column_type)
                 return responses.ok(data=serializer_config_type.data, method=constant.POST,
@@ -255,3 +258,20 @@ class ConvertData(UpdateAPIView):
                                                               provider_connection_id=provider_connection_id)
 
         return responses.ok(data={"is_convert": is_convert}, method="put", entity_name="test")
+
+
+class CustomColumnValidatorListByCustomColumnIdView(RetrieveAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = CustomColumnTypeValidatorSerializer
+
+    def get(self, request, *args, **kwargs):
+        custom_column_type_id = kwargs.get("custom_column_type_id")
+        try:
+            custom_column_validators = CustomColumnTypeValidator.objects.filter(
+                custom_column_type__id=custom_column_type_id)
+            serializer = self.get_serializer(custom_column_validators, many=True)
+            return responses.ok(data=serializer.data, method=constant.GET,
+                                entity_name='custom-column-validator')
+        except Exception as err:
+            return responses.not_found(data=None, message_system=err,
+                                       message_code='GET_CUSTOM_COLUMN_VALIDATOR_NOT_FOUND')
