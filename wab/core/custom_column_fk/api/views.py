@@ -97,26 +97,29 @@ class CustomColumnFKUpdateView(UpdateAPIView):
                 serializer_custom_column_fk = self.get_serializer(custom_column_fk)
 
                 # Delete custom_column_fk_filter_list
-                for item in custom_column_fk_filter_delete_list:
-                    custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item)
-                    custom_column_fk_filter.delete()
+                if custom_column_fk_filter_delete_list is not None:
+                    for item in custom_column_fk_filter_delete_list:
+                        custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item)
+                        custom_column_fk_filter.delete()
 
                 # Update custom_column_fk_filter_list
-                for item in custom_column_fk_filter_update_list:
-                    custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item.get('custom_column_fk_filter_id'))
-                    custom_column_fk_filter.field_name = item.get('field_name')
-                    custom_column_fk_filter.operator = item.get('operator')
-                    custom_column_fk_filter.value = item.get('value'),
-                    custom_column_fk_filter.save()
+                if custom_column_fk_filter_update_list is not None:
+                    for item in custom_column_fk_filter_update_list:
+                        custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item.get('custom_column_fk_filter_id'))
+                        custom_column_fk_filter.field_name = item.get('field_name')
+                        custom_column_fk_filter.operator = item.get('operator')
+                        custom_column_fk_filter.value = item.get('value'),
+                        custom_column_fk_filter.save()
 
                 # Create Custom_Column_Filter
-                for custom_column_filter in custom_column_fk_filter_create_list:
-                    CustomColumnFKFilter.objects.create(
-                        field_name=custom_column_filter.get('field_name'),
-                        operator=custom_column_filter.get('operator'),
-                        value=custom_column_filter.get('value'),
-                        custom_column_fk=custom_column_fk
-                    )
+                if custom_column_fk_filter_create_list is not None:
+                    for custom_column_filter in custom_column_fk_filter_create_list:
+                        CustomColumnFKFilter.objects.create(
+                            field_name=custom_column_filter.get('field_name'),
+                            operator=custom_column_filter.get('operator'),
+                            value=custom_column_filter.get('value'),
+                            custom_column_fk=custom_column_fk
+                        )
 
                 return responses.ok(data=serializer_custom_column_fk.data, method=constant.PUT, entity_name='custom_column_fk')
             except Exception as err:
