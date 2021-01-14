@@ -21,7 +21,7 @@ class CustomColumnFKListView(ListAPIView):
     queryset = CustomColumnFK.objects.all()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset().filter(connection__creator=request.user))
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         data_response = self.get_paginated_response(serializer.data)
