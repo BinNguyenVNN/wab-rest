@@ -252,12 +252,42 @@ class MongoDBManager(object):
             item = {column: {"$regex": value}}
         return item
 
-    def find_by_fk(self, db, table, column, condition, value, page=1, page_size=20):
-        item = self.condition_filter(column, condition, value)
-        select_column = {column: 1}
+    @staticmethod
+    def condition_filter_operator(condition, value):
+        operator = {"$eq": value}
+        if condition == OPERATOR_MONGODB.get_value('operator_equals'):
+            operator = {"$eq": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
+            operator = {"$ne": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
+            operator = {"$lt": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
+            operator = {"$lte": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
+            operator = {"$gt": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
+            operator = {"$gte": value}
+        elif condition == OPERATOR_MONGODB.get_value('operator_in'):
+            operator = {"$in": [value]}
+        elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
+            operator = {"$nin": [value]}
+        elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
+            value = f".*{value}.*"
+            operator = {"$regex": value}
+        return operator
+
+    def find_by_fk(self, db, table, custom_column_filter, page=1, page_size=20):
+        # item = self.condition_filter(column, condition, value)
+        # select_column = {column: 1}
+        # documents = db[table].find(
+        #     item,
+        #     select_column
+        # ).skip((page - 1) * page_size).limit(page_size)
+        items = {}
+        for i in custom_column_filter:
+            items.update({i.field_name: self.condition_filter_operator(i.operator, i.value)})
         documents = db[table].find(
-            item,
-            select_column
+            items
         ).skip((page - 1) * page_size).limit(page_size)
         count = documents.count()
         return documents, count

@@ -1,12 +1,16 @@
+import json
 
+from bson.json_util import dumps
 from django.db import transaction
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
 
 from wab.core.custom_column_fk.api.serializers import CustomColumnFKSerializer
 from wab.core.custom_column_fk.models import CustomColumnFK, CustomColumnFKFilter
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
 from wab.utils import responses, constant, token_authentication
+from wab.utils.constant import MONGO
+from wab.utils.db_manager import MongoDBManager
 from wab.utils.paginations import ResultsSetPagination
 
 
@@ -105,7 +109,8 @@ class CustomColumnFKUpdateView(UpdateAPIView):
                 # Update custom_column_fk_filter_list
                 if custom_column_fk_filter_update_list is not None:
                     for item in custom_column_fk_filter_update_list:
-                        custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item.get('custom_column_fk_filter_id'))
+                        custom_column_fk_filter = CustomColumnFKFilter.objects.get(
+                            id=item.get('custom_column_fk_filter_id'))
                         custom_column_fk_filter.field_name = item.get('field_name')
                         custom_column_fk_filter.operator = item.get('operator')
                         custom_column_fk_filter.value = item.get('value'),
@@ -121,7 +126,8 @@ class CustomColumnFKUpdateView(UpdateAPIView):
                             custom_column_fk=custom_column_fk
                         )
 
-                return responses.ok(data=serializer_custom_column_fk.data, method=constant.PUT, entity_name='custom_column_fk')
+                return responses.ok(data=serializer_custom_column_fk.data, method=constant.PUT,
+                                    entity_name='custom_column_fk')
             except Exception as err:
                 return responses.bad_request(data=str(err), message_code='UPDATE_CUSTOM_COLUMN_FK_HAS_ERROR')
         else:
@@ -150,34 +156,35 @@ class CustomColumnFKDeleteView(DestroyAPIView):
             return responses.bad_request(data=str(err), message_code='DELETE_CUSTOM_COLUMN_FK_HAS_ERROR')
 
 
-# class PreviewCustomColumnFKView(ListAPIView):
-#     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-#     serializer_class = SwaggerSerializer
-#     pagination_class = ResultsSetPagination
-#     queryset = CustomColumnFK.objects.all()
-#
-#     def get(self, request, *args, **kwargs):
-#         pk = kwargs.get('pk', None)
-#         page = request.GET.get('page', 1)
-#         page_size = request.GET.get('page_size', 20)
-#         try:
-#             custom_column_fk = self.get_queryset().get(id=pk)
-#             provider_connection = custom_column_fk.connection
-#             provider = provider_connection.provider
-#             if provider.name == MONGO:
-#                 mongo_db_manager = MongoDBManager()
-#                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(
-#                     provider_connection=provider_connection)
-#                 documents, count = mongo_db_manager.find_by_fk(db, custom_column_fk.table_name,
-#                                                                custom_column_fk.field_name,
-#                                                                custom_column_fk.operator, custom_column_fk.value,
-#                                                                page=page, page_size=page_size)
-#
-#                 data = list(documents)
-#                 result = json.loads(dumps(data))
-#                 return responses.paging_data(data=result, total_count=count, method=constant.POST,
-#                                              entity_name='custom_column_fk')
-#             else:
-#                 pass
-#         except Exception as err:
-#             return responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_FK_NOT_FOUND')
+class PreviewCustomColumnFKView(ListAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = SwaggerSerializer
+    pagination_class = ResultsSetPagination
+    queryset = CustomColumnFK.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk', None)
+        page = request.GET.get('page', 1)
+        page_size = request.GET.get('page_size', 20)
+        try:
+            custom_column_fk = self.get_queryset().get(id=pk)
+            custom_column_filter = CustomColumnFKFilter.objects.filter(custom_column_fk=custom_column_fk)
+            provider_connection = custom_column_fk.connection
+            provider = provider_connection.provider
+            if provider.name == MONGO:
+                mongo_db_manager = MongoDBManager()
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                    provider_connection=provider_connection)
+                documents, count = mongo_db_manager.find_by_fk(db, custom_column_fk.table_name,
+                                                               custom_column_filter,
+                                                               page=page, page_size=page_size)
+
+                data = list(documents)
+                result = json.loads(dumps(data))
+                return responses.paging_data(data=result, total_count=count, method=constant.POST,
+                                             entity_name='custom_column_fk')
+            else:
+                return responses.paging_data(data=None, total_count=0, method=constant.POST,
+                                             entity_name='custom_column_fk')
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_FK_NOT_FOUND')
