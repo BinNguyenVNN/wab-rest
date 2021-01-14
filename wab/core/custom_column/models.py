@@ -88,3 +88,6 @@ class CustomColumnTaskConvert(models.Model):
     data_real_type = models.CharField(null=True, blank=True, max_length=255)
     data_type = models.CharField(null=True, blank=True, max_length=255)
     current_row = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'custom_column_task_convert'

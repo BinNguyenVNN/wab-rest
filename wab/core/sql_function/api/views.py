@@ -158,7 +158,7 @@ class SqlFunctionDeleteView(DestroyAPIView):
         try:
             sql_function = self.get_queryset().get(id=sql_function_id)
             # Delete SqlFunctionOrderBy
-            sql_function_order_bys = SqlFunctionOrderBy.objects.filter(sql_function__id=sql_function_id).delete()
+            SqlFunctionOrderBy.objects.filter(sql_function__id=sql_function_id).delete()
             # Delete SqlFunctionMerge
             SqlFunctionMerge.objects.filter(sql_function__id=sql_function_id).delete()
             SqlFunctionConditionItems.objects.filter(sql_function_id=sql_function_id).delete()

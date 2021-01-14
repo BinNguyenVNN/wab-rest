@@ -23,7 +23,7 @@ app_name = "custom-column"
 urlpatterns = [
                   path('update-custom-column-type/<int:custom_column_type_id>/', UpdateCustomColumnTypeView.as_view(),
                        name='UpdateCustomColumnTypeView'),
-                  path('Custom-column-type-validator-by-custom-column-type-id/<int:custom_column_type_id>/',
+                  path('list-custom-column-type-validator/<int:custom_column_type_id>/',
                        CustomColumnValidatorListByCustomColumnIdView.as_view(),
                        name='UpdateCustomColumnTypeView'),
                   path('custom-column-mapping/', CreateCustomColumnMappingView.as_view(),
