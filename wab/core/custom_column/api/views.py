@@ -13,6 +13,7 @@ from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnTyp
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerConvertDataSerializer
 from wab.utils import token_authentication, responses, constant
+from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
 from wab.utils.paginations import ResultsSetPagination
 
@@ -212,8 +213,27 @@ class CreateCustomColumnMappingView(CreateAPIView):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        return responses.ok(data=serializer.data, method=constant.POST,
-                            entity_name='custom_column_mapping')
+        try:
+            connection = DBProviderConnection.objects.get(id=data.get('connection'))
+            provider = connection.provider
+            custom_column = CustomColumnType.objects.get(id=data.get('custom_column'))
+            if provider.name == MONGO:
+                mongo_db = MongoDBManager()
+                db, cache_db = mongo_db.connection_mongo_by_provider(provider_connection=connection)
+                # type in [str, int, float, datetime]
+                table = data.get('table_name')
+                column = data.get('real_column')
+                data_type = custom_column.slug
+                is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
+                                                                      data_type=data_type,
+                                                                      provider_connection_id=connection.id)
+                return responses.ok(data=serializer.data, method=constant.POST,
+                                    entity_name='custom_column_mapping')
+            else:
+                return responses.ok(data=None, method=constant.POST,
+                                    entity_name='custom_column_mapping')
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='MAPPING_ERROR')
 
 
 class UpdateCustomColumnMappingView(UpdateAPIView):
@@ -230,8 +250,24 @@ class UpdateCustomColumnMappingView(UpdateAPIView):
             serializer = self.serializer_class(instance, data=data, partial=partial)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
-            return responses.ok(data=serializer.data, method=constant.PUT,
-                                entity_name='custom_column_mapping')
+            connection = DBProviderConnection.objects.get(id=data.get('connection'))
+            provider = connection.provider
+            custom_column = CustomColumnType.objects.get(id=data.get('custom_column'))
+            if provider.name == MONGO:
+                mongo_db = MongoDBManager()
+                db, cache_db = mongo_db.connection_mongo_by_provider(provider_connection=connection)
+                # type in [str, int, float, datetime]
+                table = data.get('table_name')
+                column = data.get('real_column')
+                data_type = custom_column.slug
+                is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
+                                                                      data_type=data_type,
+                                                                      provider_connection_id=connection.id)
+                return responses.ok(data=serializer.data, method=constant.PUT,
+                                    entity_name='custom_column_mapping')
+            else:
+                return responses.ok(data=None, method=constant.PUT,
+                                    entity_name='custom_column_mapping')
         except Exception as err:
             responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_MAPPING_NOT_FOUND')
 

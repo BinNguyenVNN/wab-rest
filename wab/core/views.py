@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 
 from wab.core.serializers import SwaggerSerializer
 from wab.utils import responses, constant
-from wab.utils.operator import OPERATOR_MONGODB, MERGE_TYPE, RELATION
+from wab.utils.operator import OPERATOR_MONGODB, MERGE_TYPE, RELATION, MongoColumnType
 
 
 class ListOperatorView(ListAPIView):
@@ -43,3 +43,16 @@ class ListRelationView(ListAPIView):
             list_relation.append({"code": x.value[0], "name": x.value[1]})
 
         return responses.ok(data=list_relation, method=constant.GET, entity_name='list_relation')
+
+
+class ListDataTypeView(ListAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    serializer_class = SwaggerSerializer
+
+    def get(self, request, *args, **kwargs):
+        list_data_type = []
+        for x in MongoColumnType:
+            list_data_type.append({"code": x.value[0], "name": x.value[1]})
+
+        return responses.ok(data=list_data_type, method=constant.GET, entity_name='list_data_type')
