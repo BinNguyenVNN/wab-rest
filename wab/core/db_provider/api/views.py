@@ -72,6 +72,7 @@ class DBProviderConnectionViewSet(CreateModelMixin, RetrieveModelMixin, ListMode
 class CheckView(ListAPIView):
     authentication_classes = []
     permission_classes = []
+    serializer_class = SwaggerSerializer
     queryset = DBProviderConnection.objects.all()
 
     def get(self, request, *args, **kwargs):
