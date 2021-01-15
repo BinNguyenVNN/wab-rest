@@ -148,7 +148,6 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                             id=updated_item.get('custom_column_config_validation'))
                         updated_validator.custom_column_config_validation = custom_column_config_validation
                         updated_validator.operator = updated_item.get("operator")
-                        updated_validator.operator = updated_item.get("operator")
                         updated_validator.value = updated_item.get("value")
                         updated_validator.save()
 
