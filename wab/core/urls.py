@@ -2,7 +2,7 @@ from django.urls import include, path
 
 from wab.core.export_database.views import ExportPdfView, ExportExcelView, ExportTextView
 from wab.core.import_database.views import ImportCsvView
-from wab.core.views import ListOperatorView, ListJoinView, ListRelationView, ListDataTypeView
+from wab.core.views import ListOperatorView, ListJoinView, ListRelationView, ListDataTypeView, ListRegexTypeView
 
 urlpatterns = [
     path("users/", include("wab.core.users.urls")),
@@ -20,4 +20,5 @@ urlpatterns = [
     path("list-join/", ListJoinView.as_view(), name='list-operator'),
     path("list-relation/", ListRelationView.as_view(), name='list-relation'),
     path("list-data-type/", ListDataTypeView.as_view(), name='list-data-type'),
+    path("list-regex-type/", ListRegexTypeView.as_view(), name='list-regex-type'),
 ]

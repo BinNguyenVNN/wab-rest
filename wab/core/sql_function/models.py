@@ -2,7 +2,7 @@ from django.db import models
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
-from wab.utils.operator import OPERATOR_MONGODB, MERGE_TYPE, RELATION
+from wab.utils.operator import OperatorMongo, MergeType, Relation
 
 
 class SqlFunction(BaseModel):
@@ -26,7 +26,7 @@ class SqlFunctionMerge(BaseModel):
 
     merge_type = models.CharField(
         max_length=32,
-        choices=[x.value for x in MERGE_TYPE],
+        choices=[x.value for x in MergeType],
         default=None,
         null=True,
         blank=True
@@ -75,7 +75,7 @@ class SqlFunctionConditionItems(BaseModel):
 
     operator = models.CharField(
         max_length=32,
-        choices=[x.value for x in OPERATOR_MONGODB],
+        choices=[x.value for x in OperatorMongo],
         default=None,
         null=True,
         blank=True
@@ -84,7 +84,7 @@ class SqlFunctionConditionItems(BaseModel):
 
     relation = models.CharField(
         max_length=32,
-        choices=[x.value for x in RELATION],
+        choices=[x.value for x in Relation],
         default=None,
         null=True,
         blank=True

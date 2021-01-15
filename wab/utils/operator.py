@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class OPERATOR_MONGODB(Enum):
+class OperatorMongo(Enum):
     operator_in = ('in', 'in')
     operator_not_in = ('not_in', 'not in')
     operator_contains = ('contains', 'regex')
@@ -19,7 +19,7 @@ class OPERATOR_MONGODB(Enum):
         return cls[member].value[0]
 
 
-class MERGE_TYPE(Enum):
+class MergeType(Enum):
     inner_join = ('inner join', 'inner join')
     left_join = ('left join', 'left join')
     right_join = ('right join', 'right join')
@@ -31,7 +31,7 @@ class MERGE_TYPE(Enum):
         return cls[member].value[0]
 
 
-class RELATION(Enum):
+class Relation(Enum):
     relation_and = ('and', 'and')
     relation_or = ('or', 'or')
 
@@ -75,3 +75,22 @@ class MongoColumnType(Enum):
     def get_type(cls, member):
         return cls[member].value[0], cls[member].value[1]
 
+
+class RegexType(Enum):
+    IS_NUMBER = ('is_number', 'Is Number')
+    IS_TEXT_ONLY = ('is_text_only', 'Is Text Only')
+    IS_EMAIL = ('is_email', 'Is Email')
+    IS_PHONE = ('is_phone', 'Is Phone')
+    IS_CUSTOM = ('is_custom', 'Is Custom')
+
+    @classmethod
+    def get_value(cls, member):
+        return cls[member].value[0]
+
+    @classmethod
+    def get_name(cls, member):
+        return cls[member].value[1]
+
+    @classmethod
+    def get_type(cls, member):
+        return cls[member].value[0], cls[member].value[1]

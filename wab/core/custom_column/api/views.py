@@ -5,10 +5,11 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateMode
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 
-from wab.core.custom_column.api.serializers import CustomColumnRegexTypeSerializer, CustomColumnTypeSerializer, \
+from wab.core.custom_column.api.serializers import CustomColumnTypeSerializer, \
     CustomColumnConfigValidationSerializer, \
-    CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer, CreateCustomColumnMappingSerializer
-from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
+    CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer, CreateCustomColumnMappingSerializer, \
+    CreateCustomColumnTypeSerializer
+from wab.core.custom_column.models import CustomColumnType, \
     CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerConvertDataSerializer
@@ -16,56 +17,6 @@ from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
 from wab.utils.paginations import ResultsSetPagination
-
-
-class CustomColumnRegexTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
-                                   DestroyModelMixin, GenericViewSet):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    serializer_class = CustomColumnRegexTypeSerializer
-    queryset = CustomColumnRegexType.objects.all()
-    pagination_class = ResultsSetPagination
-    lookup_field = "id"
-
-    def get_queryset(self, *args, **kwargs):
-        return self.queryset.all()
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
-        data_response = self.get_paginated_response(serializer.data)
-        return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
-                                method=constant.GET, entity_name='custom_column_regex_type')
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_regex_type')
-
-
-class CustomColumnTypeViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
-                              DestroyModelMixin, GenericViewSet):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    serializer_class = CustomColumnTypeSerializer
-    queryset = CustomColumnType.objects.all()
-    pagination_class = ResultsSetPagination
-    lookup_field = "id"
-
-    def get_queryset(self, *args, **kwargs):
-        return self.queryset.all()
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().filter(connection__creator=request.user))
-        page = self.paginate_queryset(queryset)
-        serializer = self.serializer_class(page, many=True)
-        data_response = self.get_paginated_response(serializer.data)
-        return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
-                                method=constant.GET, entity_name='custom_column_type')
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_type')
 
 
 class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
@@ -93,11 +44,10 @@ class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, 
         return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_validation')
 
 
-class CustomColumnTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, UpdateModelMixin,
-                                       DestroyModelMixin, GenericViewSet):
+class CustomColumnTypeViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin, GenericViewSet):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    serializer_class = CustomColumnTypeValidatorSerializer
-    queryset = CustomColumnTypeValidator.objects.all()
+    serializer_class = CustomColumnTypeSerializer
+    queryset = CustomColumnType.objects.all()
     pagination_class = ResultsSetPagination
     lookup_field = "id"
 
@@ -110,12 +60,46 @@ class CustomColumnTypeValidatorViewSet(CreateModelMixin, RetrieveModelMixin, Lis
         serializer = self.serializer_class(page, many=True)
         data_response = self.get_paginated_response(serializer.data)
         return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
-                                method=constant.GET, entity_name='custom_column_config_type_validator')
+                                method=constant.GET, entity_name='custom_column_type')
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_config_type_validator')
+        return responses.ok(data=None, method=constant.DELETE, entity_name='custom_column_type')
+
+
+class CreateCustomColumnTypeView(CreateAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = CreateCustomColumnTypeSerializer
+
+    @transaction.atomic()
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        custom_column_type_validator_list = data.get('custom_column_type_validator_list')
+        del data['custom_column_type_validator_list']
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            try:
+                # Create Custom Column Type
+                custom_column_type = serializer.save()
+                # Create Custom_Column_Config_Type
+                if custom_column_type_validator_list is not None:
+                    for validation_item in custom_column_type_validator_list:
+                        CustomColumnTypeValidator.objects.create(
+                            custom_column_type=custom_column_type,
+                            custom_column_config_validation_id=validation_item.get('custom_column_config_validation'),
+                            operator=validation_item.get('operator'),
+                            value=validation_item.get("value")
+                        )
+
+                serializer_config_type = self.get_serializer(custom_column_type)
+                return responses.ok(data=serializer_config_type.data, method=constant.POST,
+                                    entity_name='custom-column-type')
+            except Exception as err:
+                return responses.bad_request(data=str(err),
+                                             message_code='UPDATE_CUSTOM_COLUMN_TYPE_HAS_ERROR')
+        else:
+            return responses.bad_request(data=None, message_code='UPDATE_CUSTOM_COLUMN_TYPE_INVALID')
 
 
 class UpdateCustomColumnTypeView(UpdateAPIView):
@@ -140,9 +124,7 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
 
                 # Delete List Custom_Column_Config_Type_Validator
                 if custom_column_type_validator_delete_list is not None:
-                    for deleted_item in custom_column_type_validator_delete_list:
-                        deleted_validator = CustomColumnTypeValidator.objects.get(id=deleted_item)
-                        deleted_validator.delete()
+                    CustomColumnTypeValidator.objects.filter(id__in=custom_column_type_validator_delete_list).delete()
 
                 # Update List Custom_Column_Config_Type_Validator
                 if custom_column_type_validator_update_list is not None:
@@ -158,16 +140,7 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                             updated_validator.custom_column_config_validation = custom_column_config_validation
                         else:
                             updated_validator.custom_column_config_validation = None
-
                         updated_validator.value = updated_item.get("value")
-
-                        custom_column_regex_type_id = updated_item.get("custom_column_regex_type_id")
-                        if custom_column_regex_type_id is not None:
-                            custom_column_regex_type = CustomColumnRegexType.objects.get(
-                                id=custom_column_regex_type_id)
-                            updated_validator.custom_column_regex_type = custom_column_regex_type
-                        else:
-                            updated_validator.custom_column_regex_type = None
                         updated_validator.save()
 
                 # Create List Custom_Column_Config_Type_Validator
@@ -180,18 +153,10 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                         else:
                             custom_column_config_validation = None
 
-                        custom_column_regex_type_id = created_item.get("custom_column_regex_type_id")
-                        if custom_column_regex_type_id is not None:
-                            custom_column_regex_type = CustomColumnRegexType.objects.get(
-                                id=custom_column_regex_type_id)
-                        else:
-                            custom_column_regex_type = None
-
                         CustomColumnTypeValidator.objects.create(
                             custom_column_type=custom_column_type,
                             custom_column_config_validation=custom_column_config_validation,
-                            value=created_item.get("value"),
-                            custom_column_regex_type=custom_column_regex_type
+                            value=created_item.get("value")
                         )
 
                 serializer_config_type = self.get_serializer(custom_column_type)
@@ -224,9 +189,9 @@ class CreateCustomColumnMappingView(CreateAPIView):
                 table = data.get('table_name')
                 column = data.get('real_column')
                 data_type = custom_column.slug
-                is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
-                                                                      data_type=data_type,
-                                                                      provider_connection_id=connection.id)
+                _ = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
+                                                             data_type=data_type,
+                                                             provider_connection_id=connection.id)
                 return responses.ok(data=serializer.data, method=constant.POST,
                                     entity_name='custom_column_mapping')
             else:
@@ -260,9 +225,9 @@ class UpdateCustomColumnMappingView(UpdateAPIView):
                 table = data.get('table_name')
                 column = data.get('real_column')
                 data_type = custom_column.slug
-                is_convert = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
-                                                                      data_type=data_type,
-                                                                      provider_connection_id=connection.id)
+                _ = mongo_db.update_convert_column_data_type(db=db, table=table, column=column,
+                                                             data_type=data_type,
+                                                             provider_connection_id=connection.id)
                 return responses.ok(data=serializer.data, method=constant.PUT,
                                     entity_name='custom_column_mapping')
             else:

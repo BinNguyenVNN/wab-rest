@@ -2,25 +2,20 @@ from django.db import models
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
-
-
-class CustomColumnRegexType(BaseModel):
-    name = models.CharField(null=True, blank=True, max_length=255)
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        return super(BaseModel, self).save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'custom_column_regex_type'
+from wab.utils.operator import RegexType, OperatorMongo
 
 
 class CustomColumnConfigValidation(BaseModel):
     name = models.CharField(null=True, blank=True, max_length=255)
     is_protect = models.BooleanField(default=False)
-    custom_column_regex_type = models.ForeignKey(CustomColumnRegexType, on_delete=models.CASCADE, null=True, blank=True)
+    is_regex = models.BooleanField(default=False)
+    regex = models.CharField(
+        max_length=32,
+        choices=[x.value for x in RegexType],
+        default=None,
+        null=True,
+        blank=True
+    )
     function = models.CharField(null=True, blank=True, max_length=255)
 
     def __str__(self):
@@ -54,8 +49,14 @@ class CustomColumnTypeValidator(BaseModel):
     custom_column_config_validation = models.ForeignKey(CustomColumnConfigValidation, on_delete=models.CASCADE,
                                                         null=True, blank=True)
     name = models.CharField(null=True, blank=True, max_length=255)
+    operator = models.CharField(
+        max_length=32,
+        choices=[x.value for x in OperatorMongo],
+        default=OperatorMongo.get_value('operator_equals'),
+        null=True,
+        blank=True
+    )
     value = models.CharField(null=True, blank=True, max_length=255)
-    custom_column_regex_type = models.ForeignKey(CustomColumnRegexType, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name

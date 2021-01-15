@@ -1,15 +1,8 @@
 from rest_framework import serializers
 
-from wab.core.custom_column.models import CustomColumnRegexType, CustomColumnType, \
+from wab.core.custom_column.models import CustomColumnType, \
     CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
 from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
-
-
-class CustomColumnRegexTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomColumnRegexType
-        fields = ["id", "name"]
-        lookup_field = "id"
 
 
 class CustomColumnTypeSerializer(serializers.ModelSerializer):
@@ -38,17 +31,11 @@ class CustomColumnTypeValidatorSerializer(serializers.ModelSerializer):
     custom_column_config_validation = serializers.SerializerMethodField()
     custom_column_config_validation_id = serializers.IntegerField(allow_null=True)
 
-    custom_column_regex_type = serializers.SerializerMethodField()
-    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
-
     def get_custom_column_type(self, obj):
         if obj.custom_column_type:
             serializer = CustomColumnTypeSerializer(obj.custom_column_type)
             return serializer.data
         return None
-
-    def get_custom_column_regex_type_id(self, obj):
-        return obj.custom_column_regex_type_id
 
     def get_custom_column_config_validation(self, obj):
         if obj.custom_column_config_validation:
@@ -59,15 +46,6 @@ class CustomColumnTypeValidatorSerializer(serializers.ModelSerializer):
     def get_custom_column_config_validation_id(self, obj):
         return obj.custom_column_config_validation_id
 
-    def get_custom_column_regex_type(self, obj):
-        if obj.custom_column_regex_type:
-            serializer = CustomColumnRegexTypeSerializer(obj.custom_column_regex_type)
-            return serializer.data
-        return None
-
-    def get_custom_column_regex_type_id(self, obj):
-        return obj.custom_column_regex_type_id
-
     class Meta:
         model = CustomColumnTypeValidator
         fields = '__all__'
@@ -75,20 +53,15 @@ class CustomColumnTypeValidatorSerializer(serializers.ModelSerializer):
 
 
 class CustomColumnConfigValidationSerializer(serializers.ModelSerializer):
-    custom_column_regex_type = serializers.SerializerMethodField()
-    custom_column_regex_type_id = serializers.IntegerField(allow_null=True)
-
-    def get_custom_column_regex_type(self, obj):
-        if obj.custom_column_regex_type:
-            serializer = CustomColumnRegexTypeSerializer(obj.custom_column_regex_type)
-            return serializer.data
-        return None
-
-    def get_custom_column_regex_type_id(self, obj):
-        return obj.custom_column_regex_type_id
-
     class Meta:
         model = CustomColumnConfigValidation
+        fields = '__all__'
+        lookup_field = "id"
+
+
+class CreateCustomColumnTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomColumnType
         fields = '__all__'
         lookup_field = "id"
 

@@ -6,10 +6,10 @@ import pymongo
 from pymongo import MongoClient, UpdateOne
 
 from wab.core.custom_column.models import CustomColumnTaskConvert
-from wab.core.sql_function.models import SqlFunctionMerge, SqlFunctionOrderBy, RELATION, MERGE_TYPE, \
+from wab.core.sql_function.models import SqlFunctionMerge, SqlFunctionOrderBy, Relation, MergeType, \
     SqlFunctionConditionItems
 from wab.utils.constant import MONGO_SRV_CONNECTION, MONGO_CONNECTION
-from wab.utils.operator import OPERATOR_MONGODB, MongoColumnType
+from wab.utils.operator import OperatorMongo, MongoColumnType
 
 
 def json_mongo_handler(x):
@@ -191,7 +191,8 @@ class MongoDBManager(object):
                         collection.bulk_write(operations, ordered=False)
             return True
 
-    def convert_column_data_type(self, value, parse_to_type):
+    @staticmethod
+    def convert_column_data_type(value, parse_to_type):
         if value:
             try:
                 if parse_to_type == "string":
@@ -223,7 +224,8 @@ class MongoDBManager(object):
                     if type(date_time) is datetime:
                         return value
                     return None
-            except:
+            except Exception as err:
+                print(str(err))
                 return None
         else:
             return None
@@ -231,23 +233,23 @@ class MongoDBManager(object):
     @staticmethod
     def condition_filter(column, condition, value):
         item = {column: {"$eq": value}}
-        if condition == OPERATOR_MONGODB.get_value('operator_equals'):
+        if condition == OperatorMongo.get_value('operator_equals'):
             item = {column: {"$eq": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
+        elif condition == OperatorMongo.get_value('operator_not_equals'):
             item = {column: {"$ne": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
+        elif condition == OperatorMongo.get_value('operator_less_than'):
             item = {column: {"$lt": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
+        elif condition == OperatorMongo.get_value('operator_less_than_or_equals'):
             item = {column: {"$lte": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
+        elif condition == OperatorMongo.get_value('operator_greater_than'):
             item = {column: {"$gt": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
+        elif condition == OperatorMongo.get_value('operator_greater_than_or_equals'):
             item = {column: {"$gte": value}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_in'):
+        elif condition == OperatorMongo.get_value('operator_in'):
             item = {column: {"$in": [value]}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
+        elif condition == OperatorMongo.get_value('operator_not_in'):
             item = {column: {"$nin": [value]}}
-        elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
+        elif condition == OperatorMongo.get_value('operator_contains'):
             value = f".*{value}.*"
             item = {column: {"$regex": value}}
         return item
@@ -255,23 +257,23 @@ class MongoDBManager(object):
     @staticmethod
     def condition_filter_operator(condition, value):
         operator = {"$eq": value}
-        if condition == OPERATOR_MONGODB.get_value('operator_equals'):
+        if condition == OperatorMongo.get_value('operator_equals'):
             operator = {"$eq": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_equals'):
+        elif condition == OperatorMongo.get_value('operator_not_equals'):
             operator = {"$ne": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than'):
+        elif condition == OperatorMongo.get_value('operator_less_than'):
             operator = {"$lt": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_less_than_or_equals'):
+        elif condition == OperatorMongo.get_value('operator_less_than_or_equals'):
             operator = {"$lte": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than'):
+        elif condition == OperatorMongo.get_value('operator_greater_than'):
             operator = {"$gt": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_greater_than_or_equals'):
+        elif condition == OperatorMongo.get_value('operator_greater_than_or_equals'):
             operator = {"$gte": value}
-        elif condition == OPERATOR_MONGODB.get_value('operator_in'):
+        elif condition == OperatorMongo.get_value('operator_in'):
             operator = {"$in": [value]}
-        elif condition == OPERATOR_MONGODB.get_value('operator_not_in'):
+        elif condition == OperatorMongo.get_value('operator_not_in'):
             operator = {"$nin": [value]}
-        elif condition == OPERATOR_MONGODB.get_value('operator_contains'):
+        elif condition == OperatorMongo.get_value('operator_contains'):
             value = f".*{value}.*"
             operator = {"$regex": value}
         return operator
@@ -292,7 +294,7 @@ class MongoDBManager(object):
         count = documents.count()
         return documents, count
 
-    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by, page, page_size):
+    def union(self, db, table_1, field_1, table_2, field_2, condition_items, order_by, page=0, page_size=20):
         if order_by is None:
             order_by = field_1
         list_match_and_tb1 = []
@@ -302,13 +304,13 @@ class MongoDBManager(object):
         for condition in condition_items:
             if condition.table_name == table_1:
                 item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and_tb1.append(item)
                 else:
                     list_match_or_tb1.append(item)
             else:
                 item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and_tb2.append(item)
                 else:
                     list_match_or_tb2.append(item)
@@ -375,13 +377,13 @@ class MongoDBManager(object):
         for condition in condition_items:
             if condition.table_name == table_1:
                 item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
             else:
                 item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
@@ -426,13 +428,13 @@ class MongoDBManager(object):
         for condition in condition_items:
             if condition.table_name == table_1:
                 item = self.condition_filter(condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
             else:
                 item = self.condition_filter("data." + condition.field_name, condition.operator, condition.value)
-                if condition.relation is None or condition.relation == RELATION.get_value('relation_and'):
+                if condition.relation is None or condition.relation == Relation.get_value('relation_and'):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
@@ -482,7 +484,7 @@ class MongoDBManager(object):
             order_by = order_bys.first().order_by_name
         condition_items = SqlFunctionConditionItems.objects.filter(sql_function=sql_function)
         if len(sql_function_merge) >= 2:
-            merge_type = MERGE_TYPE.left_join
+            merge_type = MergeType.left_join
             table_name_first = None
             column_name_first = None
             table_name_second = None
@@ -495,27 +497,27 @@ class MongoDBManager(object):
                 table_name_second = merge_after.table_name
                 column_name_second = merge_after.column_name
                 break
-            if merge_type == MERGE_TYPE.left_join:
+            if merge_type == MergeType.left_join:
                 return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                             table_2=table_name_second, field_2=column_name_second,
                                             order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.right_join:
+            elif merge_type == MergeType.right_join:
                 return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
                                             table_2=table_name_first, field_2=column_name_first,
                                             order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.inner_join:
+            elif merge_type == MergeType.inner_join:
                 return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                        table_2=table_name_second, field_2=column_name_second,
                                        order_by=order_by, condition_items=condition_items,
                                        page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.union:
+            elif merge_type == MergeType.union:
                 return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
                                   table_2=table_name_second, field_2=column_name_second,
                                   order_by=order_by, condition_items=condition_items,
                                   page=page, page_size=page_size)
-            elif merge_type == MERGE_TYPE.right_outer_join:
+            elif merge_type == MergeType.right_outer_join:
                 return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                              table_2=table_name_second, field_2=column_name_second,
                                              order_by=order_by, condition_items=condition_items,

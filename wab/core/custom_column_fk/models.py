@@ -2,7 +2,7 @@ from django.db import models
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.models import BaseModel
-from wab.utils.operator import OPERATOR_MONGODB
+from wab.utils.operator import OperatorMongo
 
 
 class CustomColumnFK(BaseModel):
@@ -24,8 +24,8 @@ class CustomColumnFKFilter(BaseModel):
     field_name = models.CharField(null=True, blank=True, max_length=255)
     operator = models.CharField(
         max_length=32,
-        choices=[x.value for x in OPERATOR_MONGODB],
-        default=OPERATOR_MONGODB.get_value('operator_equals'),
+        choices=[x.value for x in OperatorMongo],
+        default=OperatorMongo.get_value('operator_equals'),
         null=True,
         blank=True
     )
