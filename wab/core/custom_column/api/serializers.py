@@ -8,10 +8,17 @@ from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
 class CustomColumnTypeSerializer(serializers.ModelSerializer):
     connection = serializers.SerializerMethodField()
     connection_id = serializers.IntegerField(allow_null=True)
+    validations = serializers.SerializerMethodField()
 
     def get_connection(self, obj):
         if obj.connection:
             serializer = DBProviderConnectionSerializer(obj.connection)
+            return serializer.data
+        return None
+
+    def get_validations(self, obj):
+        if obj.connection:
+            serializer = CustomColumnTypeValidatorSerializer(obj.custom_column_type_validations.all(), many=True)
             return serializer.data
         return None
 
@@ -25,26 +32,13 @@ class CustomColumnTypeSerializer(serializers.ModelSerializer):
 
 
 class CustomColumnTypeValidatorSerializer(serializers.ModelSerializer):
-    custom_column_type = serializers.SerializerMethodField()
-    custom_column_type_id = serializers.IntegerField(allow_null=True)
-
     custom_column_config_validation = serializers.SerializerMethodField()
-    custom_column_config_validation_id = serializers.IntegerField(allow_null=True)
-
-    def get_custom_column_type(self, obj):
-        if obj.custom_column_type:
-            serializer = CustomColumnTypeSerializer(obj.custom_column_type)
-            return serializer.data
-        return None
 
     def get_custom_column_config_validation(self, obj):
         if obj.custom_column_config_validation:
             serializer = CustomColumnConfigValidationSerializer(obj.custom_column_config_validation)
             return serializer.data
         return None
-
-    def get_custom_column_config_validation_id(self, obj):
-        return obj.custom_column_config_validation_id
 
     class Meta:
         model = CustomColumnTypeValidator

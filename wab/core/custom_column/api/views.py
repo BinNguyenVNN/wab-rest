@@ -28,7 +28,17 @@ class CustomColumnConfigValidationViewSet(CreateModelMixin, RetrieveModelMixin, 
     lookup_field = "id"
 
     def get_queryset(self, *args, **kwargs):
-        return self.queryset.all()
+        return self.queryset.filter(creator=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        data.update({'creator': request.user.id})
+        data.update({'last_modified_by': request.user.id})
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return responses.ok(data=serializer.data, method=constant.POST,
+                            entity_name='custom_column_config_validation')
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

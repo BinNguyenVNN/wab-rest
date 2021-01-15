@@ -45,7 +45,8 @@ class CustomColumnType(BaseModel):
 
 
 class CustomColumnTypeValidator(BaseModel):
-    custom_column_type = models.ForeignKey(CustomColumnType, on_delete=models.CASCADE, null=True, blank=True)
+    custom_column_type = models.ForeignKey(CustomColumnType, on_delete=models.CASCADE, null=True, blank=True,
+                                           related_name='custom_column_type_validations')
     custom_column_config_validation = models.ForeignKey(CustomColumnConfigValidation, on_delete=models.CASCADE,
                                                         null=True, blank=True)
     name = models.CharField(null=True, blank=True, max_length=255)
