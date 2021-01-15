@@ -124,6 +124,9 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
         custom_column_type_validator_delete_list = data.get("custom_column_type_validator_delete_list")
         custom_column_type_validator_update_list = data.get("custom_column_type_validator_update_list")
         custom_column_type_validator_create_list = data.get("custom_column_type_validator_create_list")
+        del data['custom_column_type_validator_delete_list']
+        del data['custom_column_type_validator_update_list']
+        del data['custom_column_type_validator_create_list']
         serializer = self.get_serializer(data=data)
         if serializer.is_valid(raise_exception=True):
             try:
@@ -141,32 +144,22 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                     for updated_item in custom_column_type_validator_update_list:
                         updated_validator_id = updated_item.get("custom_column_config_type_validator_id")
                         updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
-                        updated_validator.custom_column_type = custom_column_type
-
-                        custom_column_config_validation_id = updated_item.get("custom_column_config_validation_id")
-                        if custom_column_config_validation_id is not None:
-                            custom_column_config_validation = CustomColumnConfigValidation.objects.get(
-                                id=custom_column_config_validation_id)
-                            updated_validator.custom_column_config_validation = custom_column_config_validation
-                        else:
-                            updated_validator.custom_column_config_validation = None
+                        custom_column_config_validation = CustomColumnConfigValidation.objects.get(
+                            id=updated_item.get('custom_column_config_validation'))
+                        updated_validator.custom_column_config_validation = custom_column_config_validation
+                        updated_validator.operator = updated_item.get("operator")
+                        updated_validator.operator = updated_item.get("operator")
                         updated_validator.value = updated_item.get("value")
                         updated_validator.save()
 
                 # Create List Custom_Column_Config_Type_Validator
                 if custom_column_type_validator_create_list is not None:
-                    for created_item in custom_column_type_validator_create_list:
-                        custom_column_config_validation_id = created_item.get("custom_column_config_validation_id")
-                        if custom_column_config_validation_id is not None:
-                            custom_column_config_validation = CustomColumnConfigValidation.objects.get(
-                                id=custom_column_config_validation_id)
-                        else:
-                            custom_column_config_validation = None
-
+                    for validation_item in custom_column_type_validator_create_list:
                         CustomColumnTypeValidator.objects.create(
                             custom_column_type=custom_column_type,
-                            custom_column_config_validation=custom_column_config_validation,
-                            value=created_item.get("value")
+                            custom_column_config_validation_id=validation_item.get('custom_column_config_validation'),
+                            operator=validation_item.get('operator'),
+                            value=validation_item.get("value")
                         )
 
                 serializer_config_type = self.get_serializer(custom_column_type)
