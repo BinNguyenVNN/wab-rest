@@ -286,3 +286,46 @@ class CustomColumnValidatorListByCustomColumnIdView(RetrieveAPIView):
         except Exception as err:
             return responses.not_found(data=None, message_system=err,
                                        message_code='GET_CUSTOM_COLUMN_VALIDATOR_NOT_FOUND')
+
+
+class CreateTableWithColumn(CreateAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = CreateCustomColumnMappingSerializer
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        connection_id = kwargs.get("connection_id")
+        list_field = data.get("list_field")
+        table_name = data.get("table_name")
+        connection = DBProviderConnection.objects.filter(id=connection_id).first()
+        if connection is None:
+            return responses.bad_request(data=None, message_code="PROVIDER_CONNECTION_NOT_FOUND")
+
+        if connection.provider.name == MONGO:
+            mongo_db_manager = MongoDBManager()
+            db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+            collections = mongo_db_manager.get_all_collections(db=db, cache_db=cache_db)
+            column_mapping = CustomColumnMapping.objects.filter(table_name=table_name,
+                                                                connection_id=connection.id).exists()
+            if column_mapping is False and table_name not in collections:
+                mongo_db_manager.create_new_collection(db, table_name)
+            else:
+                return responses.bad_request(data=None, message_code="TABLE_NAME_IS_EXISTS")
+
+            for field in list_field:
+                try:
+                    custom_column = CustomColumnType.objects.get(id=field.get('custom_column'))
+                    CustomColumnMapping.objects.create(
+                        connection_id=connection.id,
+                        table_name=table_name,
+                        real_column=field.get("column_name"),
+                        custom_column_name=field.get("column_name"),
+                        custom_column_id=custom_column.id
+                    )
+                except Exception as ex:
+                    print(ex)
+                    continue
+
+        resp = CustomColumnMapping.objects.filter(connection_id=connection.id, table_name=table_name)
+        serializer = self.get_serializer(resp, many=True)
+        return responses.ok(data=serializer.data, method=constant.POST, entity_name="custom_column_mapping")
