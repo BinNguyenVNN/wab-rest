@@ -27,7 +27,8 @@ class SharingFilesGetLinkView(RetrieveAPIView):
 
 
 class SharingFilesGetDataView(ListAPIView):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    authentication_classes = []
+    permission_classes = []
     queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
