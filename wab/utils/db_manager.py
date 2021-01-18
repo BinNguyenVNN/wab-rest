@@ -121,19 +121,19 @@ class MongoDBManager(object):
     @staticmethod
     def export_db_by_column(db, table, list_filter=None, list_column=None):
         collection = db[table]
-        if list_column:
-            select_column = {}
-            for c in list_column:
-                select_column.update({c: 1})
-            if list_filter:
-                return collection.find(
-                    list_filter,
-                    select_column
-                )
-            else:
-                return collection.find({}, select_column)
-        else:
-            return collection.find({})
+        # if list_column:
+        #     select_column = {}
+        #     for c in list_column:
+        #         select_column.update({c: 1})
+        #     if list_filter:
+        #         return collection.find(
+        #             list_filter,
+        #             select_column
+        #         )
+        #     else:
+        #         return collection.find({}, select_column)
+        # else:
+        return collection.find({}).limit(1000)
 
     @staticmethod
     def check_column_data_type(db, table, column):

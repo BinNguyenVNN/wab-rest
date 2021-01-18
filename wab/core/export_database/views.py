@@ -25,14 +25,15 @@ class ExportPdfView(ListAPIView):
         list_filter = kwargs.get('list_filter', None)
         list_column = kwargs.get('list_column', None)
         connection_id = kwargs.get('connection', None)
-        provider_connection = self.queryset.get(id=connection_id)
-        provider = provider_connection.provider
         try:
+            provider_connection = self.queryset.get(id=connection_id)
+            provider = provider_connection.provider
             if provider:
                 if provider.name == MONGO:
                     mongo_db_manager = MongoDBManager()
                     try:
-                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                        db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                            provider_connection=provider_connection)
                         # columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
                         # documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                         #                                                       column_sort=None,
@@ -64,6 +65,7 @@ class ExportPdfView(ListAPIView):
 
 class ExportExcelView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
@@ -72,10 +74,11 @@ class ExportExcelView(ListAPIView):
             table_name = kwargs.get("table_name")
             list_filter = kwargs.get('list_filter', None)
             list_column = kwargs.get('list_column', None)
-            connection = DBProviderConnection.objects.filter(id=connection_id).first()
-            if connection.provider.name == MONGO:
+            provider_connection = self.queryset.get(id=connection_id)
+            provider = provider_connection.provider
+            if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
                                                                  list_filter=list_filter,
                                                                  list_column=list_column)
@@ -118,6 +121,7 @@ class ExportExcelView(ListAPIView):
 
 class ExportTextView(ListAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = DBProviderConnection.objects.all()
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
@@ -126,10 +130,11 @@ class ExportTextView(ListAPIView):
             table_name = kwargs.get("table_name")
             list_filter = kwargs.get('list_filter', None)
             list_column = kwargs.get('list_column', None)
-            connection = DBProviderConnection.objects.filter(id=connection_id).first()
-            if connection.provider.name == MONGO:
+            provider_connection = self.queryset.get(id=connection_id)
+            provider = provider_connection.provider
+            if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
-                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=connection)
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
                 # c = db.__getattr__(table_name).find().limit(20)
                 documents = mongo_db_manager.export_db_by_column(db=db, table=table_name,
                                                                  list_filter=list_filter,
@@ -151,7 +156,10 @@ class ExportTextView(ListAPIView):
                         if header == "_id":
                             content += value.get(header).get('$oid')
                         else:
-                            content += value.get(header)
+                            try:
+                                content += value.get(header)
+                            except:
+                                content += ''
                         if headers.index(header) != len(headers) - 1:
                             content += ', '
                         else:
