@@ -61,17 +61,17 @@ class CreateCustomColumnTypeSerializer(serializers.ModelSerializer):
 
 
 class UpdateCustomColumnTypeSerializer(serializers.ModelSerializer):
-    connection = serializers.SerializerMethodField()
-    connection_id = serializers.IntegerField(allow_null=True)
-
-    def get_connection(self, obj):
-        if obj.connection:
-            serializer = DBProviderConnectionSerializer(obj.connection)
-            return serializer.data
-        return None
-
-    def get_connection_id(self, obj):
-        return obj.connection_id
+    # connection = serializers.SerializerMethodField()
+    # connection_id = serializers.IntegerField(allow_null=True)
+    #
+    # def get_connection(self, obj):
+    #     if obj.connection:
+    #         serializer = DBProviderConnectionSerializer(obj.connection)
+    #         return serializer.data
+    #     return None
+    #
+    # def get_connection_id(self, obj):
+    #     return obj.connection_id
 
     class Meta:
         model = CustomColumnType

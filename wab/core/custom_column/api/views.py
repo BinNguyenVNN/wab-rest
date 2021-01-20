@@ -142,7 +142,7 @@ class UpdateCustomColumnTypeView(UpdateAPIView):
                 # Update List Custom_Column_Config_Type_Validator
                 if custom_column_type_validator_update_list is not None:
                     for updated_item in custom_column_type_validator_update_list:
-                        updated_validator_id = updated_item.get("custom_column_config_type_validator_id")
+                        updated_validator_id = updated_item.get("id")
                         updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
                         custom_column_config_validation = CustomColumnConfigValidation.objects.get(
                             id=updated_item.get('custom_column_config_validation'))

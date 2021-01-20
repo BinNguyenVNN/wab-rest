@@ -81,5 +81,3 @@ class ImportCsvView(CreateAPIView):
 
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
-
-
