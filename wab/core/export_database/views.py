@@ -1,13 +1,18 @@
 import io
 import json
+import os
 from datetime import datetime
 
 import xlsxwriter as xlsxwriter
 from bson.json_util import dumps
+from django.conf import settings
 from django.http import HttpResponse
+from django.utils.encoding import smart_str
 from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
+from wab.core.export_database.models import ExportData
 from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses
 from wab.utils.constant import MONGO
@@ -174,3 +179,41 @@ class ExportTextView(ListAPIView):
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
+
+
+class DownloadFileExportViews(ListAPIView):
+    # authentication_classes = []
+    # permission_classes = [AllowAny, ]
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
+
+    def get(self, request, *args, **kwargs):
+        export_id = kwargs.get("export_id")
+        export = ExportData.objects.filter(id=export_id, status=ExportData.COMPLETE,
+                                           provider_connection__provider__name=MONGO).first()
+        try:
+            if export:
+                file_path = os.path.join(export.file_path)
+                file_path_split = export.file_path.split("\\")
+                file_name = file_path_split[-1]
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as fh:
+                        if export.file_type == ExportData.TXT:
+                            response = HttpResponse(fh.read(), content_type='text/plain')
+                            response['Content-Disposition'] = 'attachment; filename=%s' % file_name
+                            return response
+
+                        elif export.file_type == ExportData.EXCEL:
+                            response = HttpResponse(
+                                fh.read(),
+                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            )
+                            response['Content-Disposition'] = 'attachment; filename=%s' % file_name
+
+                            return response
+                return responses.bad_request(data=None, message_code="CAN'T FIND FILE")
+            return responses.bad_request(data=None, message_code="EXPORT_ID_INVALID")
+        except Exception as ex:
+            print(ex)
+            return responses.bad_request(data=None, message_code="INVALID")
