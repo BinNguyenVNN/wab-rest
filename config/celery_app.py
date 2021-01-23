@@ -8,7 +8,7 @@ from datetime import timedelta
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 app = Celery("wab", include=["wab.core.notifications.tasks", "wab.core.import_database.tasks",
-                             "wab.core.custom_column.tasks"])
+                             "wab.core.custom_column.tasks", "wab.core.export_database.tasks"])
 
 app.conf.update(
     CELERY_TASK_SERIALIZER='json',
@@ -23,11 +23,15 @@ app.conf.update(
         },
         'import_database': {
             'task': 'wab.core.import_database.tasks.process_import_database',
-            'schedule': timedelta(seconds=5),
+            'schedule': timedelta(seconds=30),
         },
         'convert_data': {
             'task': 'wab.core.custom_column.tasks.process_convert_data',
             'schedule': timedelta(seconds=15),
+        },
+        'export_database': {
+            'task': 'wab.core.export_database.tasks.process_export_database',
+            'schedule': timedelta(minutes=5),
         }
     }
 )

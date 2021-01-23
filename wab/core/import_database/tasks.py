@@ -64,6 +64,7 @@ def process_import_database():
                     "username": data.username,
                     "data": {
                         "username": data.username,
+                        "action": "import_data",
                         "notification_type": NOTIFY
                     }
                 }

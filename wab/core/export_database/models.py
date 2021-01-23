@@ -29,6 +29,8 @@ class ExportData(models.Model):
     file_path = models.CharField(max_length=128, blank=True, null=True)
     status = models.CharField(choices=STATUS_CHOICES, default=INIT, max_length=20)
     file_type = models.CharField(choices=FILE_TYPE, default=TXT, max_length=20)
+    list_filter = ArrayField(models.CharField(max_length=200), blank=True, null=True, default=list)
+    list_column = ArrayField(models.CharField(max_length=200), blank=True, null=True, default=list)
 
     class Meta:
         db_table = 'export_data'

@@ -13,8 +13,9 @@ from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.export_database.models import ExportData
+from wab.core.export_database.tasks import process_export_database
 from wab.core.serializers import SwaggerSerializer
-from wab.utils import token_authentication, responses
+from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
 from wab.utils.export_manager import GeneratePdf
@@ -75,6 +76,7 @@ class ExportExcelView(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
+            user = request.user
             connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
             list_filter = kwargs.get('list_filter', None)
@@ -88,37 +90,51 @@ class ExportExcelView(ListAPIView):
                                                                  list_filter=list_filter,
                                                                  list_column=list_column)
 
-                result = json.loads(dumps(list(documents)))
-                headers = list(result[0].keys())
+                if documents.count() < 1000:
+                    result = json.loads(dumps(list(documents)))
+                    headers = list(result[0].keys())
 
-                output = io.BytesIO()
-                workbook = xlsxwriter.Workbook(output)
-                worksheet = workbook.add_worksheet()
+                    output = io.BytesIO()
+                    workbook = xlsxwriter.Workbook(output)
+                    worksheet = workbook.add_worksheet()
 
-                cell_format_header = workbook.add_format()
-                cell_format_header.set_bold()
+                    cell_format_header = workbook.add_format()
+                    cell_format_header.set_bold()
 
-                for index in range(len(headers)):
-                    worksheet.write(0, index, headers[index], cell_format_header)
-
-                for row_num, columns in enumerate(result):
                     for index in range(len(headers)):
-                        value = columns.get(headers[index]) if index != 0 else columns.get(headers[index]).get('$oid')
-                        worksheet.write(row_num + 1, index, value)
+                        worksheet.write(0, index, headers[index], cell_format_header)
 
-                workbook.close()
+                    for row_num, columns in enumerate(result):
+                        for index in range(len(headers)):
+                            value = columns.get(headers[index]) if index != 0 else columns.get(headers[index]).get(
+                                '$oid')
+                            worksheet.write(row_num + 1, index, value)
 
-                output.seek(0)
+                    workbook.close()
 
-                today = datetime.now().strftime("%d/%m/%Y_%H%M%S")
-                filename = f"ExportData-{table_name}-{today}.xlsx"
-                response = HttpResponse(
-                    output,
-                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
-                response['Content-Disposition'] = 'attachment; filename=%s' % filename
+                    output.seek(0)
 
-                return response
+                    today = datetime.now().strftime("%d%m%Y_%H%M%S")
+                    filename = f"ExportData-{table_name}-{today}.xlsx"
+                    response = HttpResponse(
+                        output,
+                        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+                    return response
+                else:
+                    ExportData.objects.create(
+                        provider_connection_id=provider_connection.id,
+                        username=user.username,
+                        table=table_name,
+                        status=ExportData.INIT,
+                        file_type=ExportData.EXCEL,
+                        list_filter=list_filter,
+                        list_column=list_column
+                    )
+                    return responses.ok(data="Waiting notify for export", method=constant.GET,
+                                        entity_name='export-data')
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
@@ -131,6 +147,7 @@ class ExportTextView(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
+            user = request.user
             connection_id = kwargs.get("connection")
             table_name = kwargs.get("table_name")
             list_filter = kwargs.get('list_filter', None)
@@ -145,37 +162,51 @@ class ExportTextView(ListAPIView):
                                                                  list_filter=list_filter,
                                                                  list_column=list_column)
 
-                result = json.loads(dumps(list(documents)))
-                headers = list(result[0].keys())
+                if documents.count() < 1000:
 
-                content = ''
-                for header in headers:
-                    content += header
-                    if headers.index(header) != len(headers) - 1:
-                        content += ', '
-                    else:
-                        content += '\n'
+                    result = json.loads(dumps(list(documents)))
+                    headers = list(result[0].keys())
 
-                for value in result:
+                    content = ''
                     for header in headers:
-                        if header == "_id":
-                            content += value.get(header).get('$oid')
-                        else:
-                            try:
-                                content += value.get(header)
-                            except:
-                                content += ''
+                        content += header
                         if headers.index(header) != len(headers) - 1:
                             content += ', '
                         else:
                             content += '\n'
 
-                today = datetime.now().strftime("%d/%m/%Y_%H%M%S")
-                filename = f"ExportData-{table_name}-{today}.txt"
-                response = HttpResponse(content, content_type='text/plain')
-                response['Content-Disposition'] = 'attachment; filename=%s' % filename
+                    for value in result:
+                        for header in headers:
+                            if header == "_id":
+                                content += value.get(header).get('$oid')
+                            else:
+                                try:
+                                    content += value.get(header)
+                                except:
+                                    content += ''
+                            if headers.index(header) != len(headers) - 1:
+                                content += ', '
+                            else:
+                                content += '\n'
 
-                return response
+                    today = datetime.now().strftime("%d%m%Y_%H%M%S")
+                    filename = f"ExportData-{table_name}-{today}.txt"
+                    response = HttpResponse(content, content_type='text/plain')
+                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+                    return response
+                else:
+                    ExportData.objects.create(
+                        provider_connection_id=provider_connection.id,
+                        username=user.username,
+                        table=table_name,
+                        status=ExportData.INIT,
+                        file_type=ExportData.EXCEL,
+                        list_filter=list_filter,
+                        list_column=list_column
+                    )
+                    return responses.ok(data="Waiting notify for export", method=constant.GET,
+                                        entity_name='export-data')
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
         except Exception as err:
             return responses.not_found(data=None, message_code='SQL_FUNCTION_NOT_FOUND', message_system=err)
@@ -210,10 +241,27 @@ class DownloadFileExportViews(ListAPIView):
                                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                             )
                             response['Content-Disposition'] = 'attachment; filename=%s' % file_name
-
                             return response
+
+                        elif export.file_type == ExportData.PDF:
+                            response = HttpResponse(fh.read(), content_type='application/pdf')
+                            response['Content-Disposition'] = 'attachment; filename=%s' % file_name
+                            return response
+
                 return responses.bad_request(data=None, message_code="CAN'T FIND FILE")
             return responses.bad_request(data=None, message_code="EXPORT_ID_INVALID")
         except Exception as ex:
             print(ex)
             return responses.bad_request(data=None, message_code="INVALID")
+
+
+class ProcessFileExportViews(ListAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    # authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = DBProviderConnection.objects.all()
+    serializer_class = SwaggerSerializer
+
+    def get(self, request, *args, **kwargs):
+        process_export_database()
+        return responses.ok(data=None)

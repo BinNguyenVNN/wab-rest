@@ -133,7 +133,7 @@ class MongoDBManager(object):
         #     else:
         #         return collection.find({}, select_column)
         # else:
-        return collection.find({}).limit(1000)
+        return collection.find({})
 
     @staticmethod
     def check_column_data_type(db, table, column):
@@ -220,7 +220,7 @@ class MongoDBManager(object):
                         return value
                     return float(value)
                 elif parse_to_type == "datetime":
-                    date_time = datetime.strptime(value, "%d/%m/%Y %H:%M")
+                    date_time = datetime.strptime(value, "%d%m%Y_%H%M")
                     if type(date_time) is datetime:
                         return value
                     return None
