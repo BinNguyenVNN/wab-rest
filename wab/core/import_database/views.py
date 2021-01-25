@@ -63,12 +63,12 @@ class ImportCsvView(CreateAPIView):
                 time_stamp = datetime.datetime.now().timestamp()
                 file_name = f"{file_full_name[0]}_{str(int(time_stamp))}.{file_full_name[1]}"
 
-                fs = FileSystemStorage(location=f"{settings.MEDIA_ROOT}\import",
-                                       base_url=f"{settings.MEDIA_ROOT}\import")
+                fs = FileSystemStorage(location=f"{settings.MEDIA_ROOT}/import",
+                                       base_url=f"{settings.MEDIA_ROOT}/import")
                 filename = fs.save(file_name, file_obj)
                 uploaded_file_url = fs.url(filename)
 
-                static_dir = f"{settings.MEDIA_ROOT}\import\{filename}"
+                static_dir = f"{settings.MEDIA_ROOT}/import/{filename}"
 
                 ImportData.objects.create(
                     provider_connection_id=connection.id,

@@ -54,7 +54,7 @@ def process_export_database():
                             content += '\n'
 
                 filename = f"ExportData-{export.table}-{today}.txt"
-                file_path = f"{settings.MEDIA_ROOT}\export\\{filename}"
+                file_path = f"{settings.MEDIA_ROOT}/export/{filename}"
 
                 with io.open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
@@ -80,7 +80,7 @@ def process_export_database():
 
             elif export.file_type == ExportData.EXCEL:
                 filename = f"ExportData-{export.table}-{today}.xlsx"
-                file_path = f"{settings.MEDIA_ROOT}\export\\{filename}"
+                file_path = f"{settings.MEDIA_ROOT}/export/{filename}"
                 workbook = xlsxwriter.Workbook(file_path)
                 worksheet = workbook.add_worksheet()
 
