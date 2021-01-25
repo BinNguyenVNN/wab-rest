@@ -30,7 +30,8 @@ class CustomColumnFKFilter(BaseModel):
         blank=True
     )
     value = models.CharField(null=True, blank=True, max_length=255)
-    custom_column_fk = models.ForeignKey(CustomColumnFK, on_delete=models.CASCADE, null=True, blank=True)
+    custom_column_fk = models.ForeignKey(CustomColumnFK, on_delete=models.CASCADE, null=True, blank=True,
+                                         related_name='custom_column_fk_filters')
 
     def __str__(self):
         return self.field_name

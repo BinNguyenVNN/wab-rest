@@ -5,13 +5,15 @@ from wab.core.db_provider.api.serializers import DBProviderConnectionSerializer
 
 
 class CustomColumnFKFilterSerializer(serializers.ModelSerializer):
-    model = CustomColumnFKFilter
-    fields = '__all__'
+    class Meta:
+        model = CustomColumnFKFilter
+        fields = '__all__'
+        lookup_field = "id"
 
 
 class CustomColumnFKSerializer(serializers.ModelSerializer):
     connection = serializers.SerializerMethodField()
-    connection_id = serializers.IntegerField(allow_null=True)
+    list_filters = serializers.SerializerMethodField()
 
     def get_connection(self, obj):
         if obj.connection:
@@ -19,9 +21,12 @@ class CustomColumnFKSerializer(serializers.ModelSerializer):
             return serializer.data
         return None
 
-    def get_connection_id(self, obj):
-        return obj.connection_id
-
+    def get_list_filters(self, obj):
+        if obj.connection:
+            serializer = CustomColumnFKFilterSerializer(obj.custom_column_fk_filters.all(), many=True)
+            return serializer.data
+        else:
+            return []
 
     class Meta:
         model = CustomColumnFK

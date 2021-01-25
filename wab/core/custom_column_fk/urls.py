@@ -13,7 +13,7 @@ else:
 app_name = "custom-column-fk"
 urlpatterns = [
                   path('list-custom-column-fk/', CustomColumnFKListView.as_view(), name='CustomColumnFKListView'),
-                  path('detail-custom-column-fk/<int:pk>', CustomColumnFKView.as_view(), name='CustomColumnFKView'),
+                  path('detail-custom-column-fk/<int:pk>/', CustomColumnFKView.as_view(), name='CustomColumnFKView'),
                   path("create-custom-column-fk/", CustomColumnFKCreateView.as_view(), name='CustomColumnFKCreateView'),
                   path('update-custom-column-fk/<int:pk>/', CustomColumnFKUpdateView.as_view(),
                        name='CustomColumnFKUpdateView'),
