@@ -21,7 +21,8 @@ class SharingFilesGetLinkView(RetrieveAPIView):
         try:
             sharing_key_decode = connection_id + ";" + table_name
             sharing_key_encode = base64.b64encode(bytes(sharing_key_decode, "utf-8"))
-            return responses.ok(data=settings.WAB_FE + 'admin/' + sharing_key_encode.decode('utf-8'), method=constant.GET, entity_name='sharing-files')
+            return responses.ok(data=sharing_key_encode.decode('utf-8'),
+                                method=constant.GET, entity_name='sharing-files')
         except Exception as err:
             return responses.not_found(data=None, message_code='SHARING_FILES_CAN_NOT_CREATE_LINK', message_system=err)
 
@@ -49,7 +50,8 @@ class SharingFilesGetDataView(ListAPIView):
                     if provider.name == MONGO:
                         mongo_db_manager = MongoDBManager()
                         try:
-                            db, cache_db = mongo_db_manager.connection_mongo_by_provider(provider_connection=provider_connection)
+                            db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                                provider_connection=provider_connection)
                             documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                                   column_sort=None,
                                                                                   sort=None, page=None,

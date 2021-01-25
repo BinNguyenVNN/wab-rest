@@ -2,7 +2,7 @@ import json
 
 from bson.json_util import dumps
 from django.db import transaction
-from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView
 
 from wab.core.custom_column_fk.api.serializers import CustomColumnFKSerializer
 from wab.core.custom_column_fk.models import CustomColumnFK, CustomColumnFKFilter
@@ -27,6 +27,18 @@ class CustomColumnFKListView(ListAPIView):
         data_response = self.get_paginated_response(serializer.data)
         return responses.paging(data=data_response.data.get('results'), total_count=data_response.data.get('count'),
                                 method=constant.GET, entity_name='custom-column-fk')
+
+
+class CustomColumnFKView(RetrieveAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    pagination_class = ResultsSetPagination
+    serializer_class = CustomColumnFKSerializer
+
+    def get(self, request, *args, **kwargs):
+        custom_column_fk_id = kwargs.get("pk")
+        custom_column_fk = CustomColumnFK.objects.filter(id=custom_column_fk_id).first()
+        serializer = self.serializer_class(custom_column_fk)
+        return responses.ok(data=serializer.data, method=constant.GET, entity_name='custom-column-fk')
 
 
 class CustomColumnFKCreateView(CreateAPIView):
