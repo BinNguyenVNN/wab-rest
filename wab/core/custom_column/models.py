@@ -25,6 +25,7 @@ class CustomColumnConfigValidation(BaseModel):
         return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
+        ordering = ['-id']
         db_table = 'custom_column_config_validation'
 
 
@@ -41,6 +42,7 @@ class CustomColumnType(BaseModel):
         return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
+        ordering = ['-id']
         db_table = 'custom_column_type'
 
 
@@ -66,6 +68,7 @@ class CustomColumnTypeValidator(BaseModel):
         return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
+        ordering = ['-id']
         db_table = 'custom_column_type_validator'
 
 
@@ -80,6 +83,7 @@ class CustomColumnMapping(models.Model):
         return self.custom_column_name
 
     class Meta:
+        ordering = ['-id']
         db_table = 'custom_column_mapping'
 
 

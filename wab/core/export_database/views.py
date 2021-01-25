@@ -5,9 +5,7 @@ from datetime import datetime
 
 import xlsxwriter as xlsxwriter
 from bson.json_util import dumps
-from django.conf import settings
 from django.http import HttpResponse
-from django.utils.encoding import smart_str
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 
@@ -59,7 +57,7 @@ class ExportPdfView(ListAPIView):
                         response = pdf.generate_pdf(context={})
                         return response
                     except Exception as err:
-                        return responses.bad_request(data=err, message_code='BD_ERROR')
+                        return responses.bad_request(data=str(err), message_code='BD_ERROR')
                 else:
                     # TODO: implement another phase
                     pass
