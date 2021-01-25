@@ -133,7 +133,7 @@ class MongoDBManager(object):
         #     else:
         #         return collection.find({}, select_column)
         # else:
-        return collection.find({})
+        return collection.find({}).limit(1000)
 
     @staticmethod
     def check_column_data_type(db, table, column):
