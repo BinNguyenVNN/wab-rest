@@ -104,7 +104,7 @@ class MongoDBManager(object):
 
     @staticmethod
     def create_new_collection(db, collection_name):
-        collection = db[collection_name]
+        collection = db.create_collection(collection_name)
         return collection
 
     @staticmethod
