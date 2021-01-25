@@ -31,14 +31,17 @@ class CustomColumnFKListView(ListAPIView):
 
 class CustomColumnFKView(RetrieveAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    pagination_class = ResultsSetPagination
+    queryset = CustomColumnFK.objects.all()
     serializer_class = CustomColumnFKSerializer
 
     def get(self, request, *args, **kwargs):
-        custom_column_fk_id = kwargs.get("pk")
-        custom_column_fk = CustomColumnFK.objects.filter(id=custom_column_fk_id).first()
-        serializer = self.serializer_class(custom_column_fk)
-        return responses.ok(data=serializer.data, method=constant.GET, entity_name='custom-column-fk')
+        try:
+            custom_column_fk_id = kwargs.get("pk")
+            custom_column_fk = self.get_queryset().get(id=custom_column_fk_id)
+            serializer = self.serializer_class(custom_column_fk)
+            return responses.ok(data=serializer.data, method=constant.GET, entity_name='custom-column-fk')
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='CUSTOM_COLUMN_FK_NOT_FOUND')
 
 
 class CustomColumnFKCreateView(CreateAPIView):
