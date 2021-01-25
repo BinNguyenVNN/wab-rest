@@ -165,6 +165,9 @@ class DBConnectionListColumnView(ListAPIView):
                     mongo_db_manager = MongoDBManager()
                     db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                         provider_connection=provider_connection)
+                    documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
+                                                                          column_sort=None,
+                                                                          sort=None, page=1, page_size=20)
                     # TODO: PhuongTN -> get real column from database
                     columns = []
                     real_columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
@@ -172,28 +175,38 @@ class DBConnectionListColumnView(ListAPIView):
                     custom_columns = CustomColumnMapping.objects.filter(connection_id=connection_id,
                                                                         table_name=table_name)
                     if custom_columns.exists():
-                        custom_columns = custom_columns
-                        for rc in real_columns:
-                            is_append = False
+                        if count == 0:
                             for cc in custom_columns:
-                                if rc == cc.real_column:
-                                    obj = {
-                                        'id': cc.id,
-                                        'real_column': cc.real_column,
-                                        'custom_column_name': cc.custom_column_name,
-                                        'custom_column_id': cc.custom_column.id
-                                    }
-                                    columns.append(obj)
-                                    is_append = True
-                                    break
-                            if not is_append:
                                 obj = {
-                                    'id': None,
-                                    'real_column': rc,
-                                    'custom_column_name': None,
-                                    'custom_column_id': None
+                                    'id': cc.id,
+                                    'real_column': cc.real_column,
+                                    'custom_column_name': cc.custom_column_name,
+                                    'custom_column_id': cc.custom_column.id
                                 }
                                 columns.append(obj)
+                        else:
+                            custom_columns = custom_columns
+                            for rc in real_columns:
+                                is_append = False
+                                for cc in custom_columns:
+                                    if rc == cc.real_column:
+                                        obj = {
+                                            'id': cc.id,
+                                            'real_column': cc.real_column,
+                                            'custom_column_name': cc.custom_column_name,
+                                            'custom_column_id': cc.custom_column.id
+                                        }
+                                        columns.append(obj)
+                                        is_append = True
+                                        break
+                                if not is_append:
+                                    obj = {
+                                        'id': None,
+                                        'real_column': rc,
+                                        'custom_column_name': None,
+                                        'custom_column_id': None
+                                    }
+                                    columns.append(obj)
 
                     else:
                         for rc in real_columns:
