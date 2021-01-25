@@ -88,7 +88,7 @@ class ExportExcelView(ListAPIView):
                                                                  list_filter=list_filter,
                                                                  list_column=list_column)
 
-                if documents.count() < 1000:
+                if documents.count() <= 1000:
                     result = json.loads(dumps(list(documents)))
                     headers = list(result[0].keys())
 
@@ -160,7 +160,7 @@ class ExportTextView(ListAPIView):
                                                                  list_filter=list_filter,
                                                                  list_column=list_column)
 
-                if documents.count() < 1000:
+                if documents.count() <= 1000:
 
                     result = json.loads(dumps(list(documents)))
                     headers = list(result[0].keys())
