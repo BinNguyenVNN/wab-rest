@@ -9,6 +9,7 @@ from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
+from bson import json_util
 
 
 class SharingFilesGetLinkView(RetrieveAPIView):
@@ -34,6 +35,9 @@ class SharingFilesGetDataView(ListAPIView):
     serializer_class = SwaggerSerializer
 
     def get(self, request, *args, **kwargs):
+        data = request.query_params
+        page = int(data.get("page", '1'))
+        page_size = int(data.get("page_size", '20'))
         sharing_key_encode = kwargs.get("sharing_key")
         try:
             sharing_key_decode_utf8 = base64.b64decode(sharing_key_encode)
@@ -54,10 +58,10 @@ class SharingFilesGetDataView(ListAPIView):
                                 provider_connection=provider_connection)
                             documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                                   column_sort=None,
-                                                                                  sort=None, page=None,
-                                                                                  page_size=None)
+                                                                                  sort=None, page=page,
+                                                                                  page_size=page_size)
                             data = list(documents)
-                            result = json.loads(json.dumps(data))
+                            result = json.loads(json_util.dumps(data))
                             return responses.ok(data=result, method=constant.GET, entity_name='sharing_files')
                         except Exception as err:
                             return responses.bad_request(data=err, message_code='BD_ERROR')
