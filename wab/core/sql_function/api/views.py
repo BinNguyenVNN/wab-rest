@@ -2,12 +2,12 @@ import json
 
 from bson.json_util import dumps
 from django.db import transaction
-from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerSerializer
-from wab.core.sql_function.api.serializers import SqlFunctionSerializer
+from wab.core.sql_function.api.serializers import SqlFunctionSerializer, SqlFunctionDetailSerializer
 from wab.core.sql_function.models import SqlFunction, SqlFunctionOrderBy, SqlFunctionMerge, SqlFunctionConditionItems
 from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
@@ -87,6 +87,20 @@ class SqlFunctionCreateView(CreateAPIView):
                                              message_code='CREATE_SQL_FUNCTION_HAS_ERROR')
         else:
             return responses.bad_request(data=None, message_code='CREATE_SQL_FUNCTION_INVALID')
+
+
+class SqlFunctionDetailView(RetrieveAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    serializer_class = SqlFunctionDetailSerializer
+
+    def get(self, request, *args, **kwargs):
+        try:
+            sql_function_id = kwargs.get("pk")
+            sql_function = SqlFunction.objects.get(id=sql_function_id)
+            serializer = self.serializer_class(sql_function)
+            return responses.ok(data=serializer.data, method=constant.GET, entity_name='sql-function')
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='SQL_FUNCTION_NOT_FOUND')
 
 
 class SqlFunctionUpdateView(UpdateAPIView):
