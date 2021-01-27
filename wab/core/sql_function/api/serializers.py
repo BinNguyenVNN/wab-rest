@@ -62,14 +62,14 @@ class SqlFunctionDetailSerializer(serializers.ModelSerializer):
         if sql_function_merges:
             serializer = SqlFunctionMergeSerializer(sql_function_merges, many=True)
             return serializer.data
-        return None
+        return []
 
     def get_sql_function_condition_items(self, obj):
         sql_function_condition_items = SqlFunctionConditionItems.objects.filter(sql_function=obj)
         if sql_function_condition_items:
             serializer = SqlFunctionConditionItemsSerializer(sql_function_condition_items, many=True)
             return serializer.data
-        return None
+        return []
 
     class Meta:
         model = SqlFunction
