@@ -1,7 +1,7 @@
 import base64
 import json
 
-from django.conf import settings
+from bson import json_util
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from wab.core.db_provider.models import DBProviderConnection
@@ -9,7 +9,6 @@ from wab.core.serializers import SwaggerSerializer
 from wab.utils import token_authentication, responses, constant
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
-from bson import json_util
 
 
 class SharingFilesGetLinkView(RetrieveAPIView):
@@ -56,18 +55,24 @@ class SharingFilesGetDataView(ListAPIView):
                         try:
                             db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                                 provider_connection=provider_connection)
+                            columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
                             documents, count = mongo_db_manager.get_all_documents(db=db, collection=table_name,
                                                                                   column_sort=None,
                                                                                   sort=None, page=page,
                                                                                   page_size=page_size)
                             data = list(documents)
-                            result = json.loads(json_util.dumps(data))
-                            return responses.ok(data=result, method=constant.GET, entity_name='sharing_files')
+                            result_document = json.loads(json_util.dumps(data))
+                            result = {
+                                'columns': columns,
+                                'documents': result_document
+                            }
+                            return responses.paging_data(data=result, total_count=count, method=constant.GET,
+                                                         entity_name='sharing_files')
                         except Exception as err:
                             return responses.bad_request(data=err, message_code='BD_ERROR')
                     else:
                         # TODO: implement another phase
-                        pass
+                        return responses.ok(data=None, method=constant.GET, entity_name='sharing_files')
                 else:
                     return responses.bad_request(data='Provider not found', message_code='PROVIDER_NOT_FOUND')
             else:
