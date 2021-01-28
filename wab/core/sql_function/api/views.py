@@ -57,29 +57,26 @@ class SqlFunctionCreateView(CreateAPIView):
                     sql_function=sql_function
                 )
                 # Create SqlFunctionMerge
-                for sql_function_merge in sql_function_merges:
-                    SqlFunctionMerge.objects.create(
-                        table_name=sql_function_merge.get('table_name'),
-                        column_name=sql_function_merge.get('column_name'),
-                        merge_type=sql_function_merge.get('merge_type'),
-                        sql_function=sql_function
-                    )
-
-                # # Create SqlFunctionCondition
-                # sql_function_condition = SqlFunctionCondition.objects.create(
-                #     sql_function=sql_function
-                # )
+                if sql_function_merges is not None:
+                    for sql_function_merge in sql_function_merges:
+                        SqlFunctionMerge.objects.create(
+                            table_name=sql_function_merge.get('table_name'),
+                            column_name=sql_function_merge.get('column_name'),
+                            merge_type=sql_function_merge.get('merge_type'),
+                            sql_function=sql_function
+                        )
 
                 # Create SqlFunctionConditionItems
-                for sql_function_condition_item in sql_function_condition_items:
-                    SqlFunctionConditionItems.objects.create(
-                        table_name=sql_function_condition_item.get('table_name'),
-                        field_name=sql_function_condition_item.get('field_name'),
-                        sql_function=sql_function,
-                        value=sql_function_condition_item.get('value'),
-                        operator=sql_function_condition_item.get('operator'),
-                        relation=sql_function_condition_item.get('relation')
-                    )
+                if sql_function_condition_items is not None:
+                    for sql_function_condition_item in sql_function_condition_items:
+                        SqlFunctionConditionItems.objects.create(
+                            table_name=sql_function_condition_item.get('table_name'),
+                            field_name=sql_function_condition_item.get('field_name'),
+                            sql_function=sql_function,
+                            value=sql_function_condition_item.get('value'),
+                            operator=sql_function_condition_item.get('operator'),
+                            relation=sql_function_condition_item.get('relation')
+                        )
 
                 return responses.ok(data=serializer_sql_function.data, method=constant.POST, entity_name='sql-function')
             except Exception as err:
@@ -137,23 +134,25 @@ class SqlFunctionUpdateView(UpdateAPIView):
                 sql_function_order_by.save()
 
                 # Update SqlFunctionMerge
-                for item in sql_function_merges:
-                    sql_function_merge = SqlFunctionMerge.objects.get(id=item.get('sql_function_merge_id'))
-                    sql_function_merge.table_name = item.get('table_name')
-                    sql_function_merge.merge_type = item.get('merge_type')
-                    sql_function_merge.column_name = item.get('column_name'),
-                    sql_function_merge.save()
+                if sql_function_merges is not None:
+                    for item in sql_function_merges:
+                        sql_function_merge = SqlFunctionMerge.objects.get(id=item.get('id'))
+                        sql_function_merge.table_name = item.get('table_name')
+                        sql_function_merge.merge_type = item.get('merge_type')
+                        sql_function_merge.column_name = item.get('column_name'),
+                        sql_function_merge.save()
 
                 # Update SqlFunctionConditionItems
-                for item in sql_function_condition_items:
-                    sql_function_condition_item = SqlFunctionConditionItems.objects.get(
-                        id=item.get('sql_function_condition_item_id'))
-                    sql_function_condition_item.table_name = item.get('table_name')
-                    sql_function_condition_item.field_name = item.get('field_name')
-                    sql_function_condition_item.value = item.get('value')
-                    sql_function_condition_item.operator = item.get('operator')
-                    sql_function_condition_item.relation = item.get('relation')
-                    sql_function_condition_item.save()
+                if sql_function_condition_items is not None:
+                    for item in sql_function_condition_items:
+                        sql_function_condition_item = SqlFunctionConditionItems.objects.get(
+                            id=item.get('id'))
+                        sql_function_condition_item.table_name = item.get('table_name')
+                        sql_function_condition_item.field_name = item.get('field_name')
+                        sql_function_condition_item.value = item.get('value')
+                        sql_function_condition_item.operator = item.get('operator')
+                        sql_function_condition_item.relation = item.get('relation')
+                        sql_function_condition_item.save()
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
                 return responses.bad_request(data=str(err), message_code='UPDATE_SQL_FUNCTION_HAS_ERROR')

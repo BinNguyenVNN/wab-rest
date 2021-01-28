@@ -68,13 +68,14 @@ class CustomColumnFKCreateView(CreateAPIView):
                 )
 
                 # Create Custom_Column_Filter
-                for custom_column_filter in custom_column_fk_filter_list:
-                    CustomColumnFKFilter.objects.create(
-                        field_name=custom_column_filter.get('field_name'),
-                        operator=custom_column_filter.get('operator'),
-                        value=custom_column_filter.get('value'),
-                        custom_column_fk=custom_column_fk
-                    )
+                if custom_column_fk_filter_list is not None:
+                    for custom_column_filter in custom_column_fk_filter_list:
+                        CustomColumnFKFilter.objects.create(
+                            field_name=custom_column_filter.get('field_name'),
+                            operator=custom_column_filter.get('operator'),
+                            value=custom_column_filter.get('value'),
+                            custom_column_fk=custom_column_fk
+                        )
 
                 serializer_custom_column_fk = self.get_serializer(custom_column_fk)
                 return responses.ok(data=serializer_custom_column_fk.data, method=constant.POST,
