@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from rest_framework.generics import CreateAPIView
 from rest_framework.parsers import FileUploadParser
+from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.import_database.models import ImportData
@@ -16,7 +17,9 @@ from wab.utils.db_manager import MongoDBManager
 
 
 class ImportCsvView(CreateAPIView):
-    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    authentication_classes = []
+    permission_classes = [AllowAny, ]
+    # authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = SwaggerSerializer
     parser_class = (FileUploadParser,)
 
@@ -42,11 +45,12 @@ class ImportCsvView(CreateAPIView):
                     headers = list(csv_data.fieldnames)
                     try:
                         columns = mongo_db_manager.get_all_keys(db=db, collection=table_name)
-                        for header in headers:
-                            if header not in columns:
-                                return responses.bad_request(
-                                    data=f"Column '{header}' is not exists in table {table_name}",
-                                    message_code="Column is not exists")
+                        if columns:
+                            for header in headers:
+                                if header not in columns:
+                                    return responses.bad_request(
+                                        data=f"Column '{header}' is not exists in table {table_name}",
+                                        message_code="Column is not exists")
 
                     except Exception as err:
                         return responses.bad_request(data=str(err), message_code=str(err))
