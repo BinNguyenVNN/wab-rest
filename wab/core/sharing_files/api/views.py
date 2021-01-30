@@ -2,7 +2,7 @@ import base64
 import json
 
 from bson import json_util
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.serializers import SwaggerSerializer

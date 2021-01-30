@@ -527,6 +527,9 @@ class MongoDBManager(object):
         else:
             return None
 
+    def create_table_with_sql_function(self, db, collection, sql_function):
+        pass
+
 
 class PostgresManager(object):
     __metaclass__ = Singleton

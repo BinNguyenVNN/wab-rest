@@ -3,7 +3,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
 from wab.core.sql_function.api.views import SqlFunctionListView, SqlFunctionCreateView, SqlFunctionUpdateView, \
-    SqlFunctionDeleteView, SqlJoinViewTest, SqlUnionViewTest, PreviewSqlFunctionView, SqlFunctionDetailView
+    SqlFunctionDeleteView, SqlJoinViewTest, SqlUnionViewTest, PreviewSqlFunctionView, SqlFunctionDetailView, \
+    CreateTableWithSqlFunctionView
 
 if settings.DEBUG:
     router = DefaultRouter()
@@ -20,5 +21,7 @@ urlpatterns = [
                   path('delete/<int:pk>/', SqlFunctionDeleteView.as_view(), name='SqlFunctionDeleteView'),
                   path('preview/<int:pk>/', PreviewSqlFunctionView.as_view(),
                        name='PreviewSqlFunctionView'),
+                  path('create-table/<str:table_name>/<int:sql_function_id>/', CreateTableWithSqlFunctionView.as_view(),
+                       name='SharingFilesGetDataView'),
 
               ] + router.urls

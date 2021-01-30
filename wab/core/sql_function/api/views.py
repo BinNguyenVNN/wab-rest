@@ -339,3 +339,27 @@ class SqlUnionViewTest(ListAPIView):
                 print(end_length)
                 return responses.ok(data={'count': len(result), 'result': result[start_length:end_length]},
                                     method=constant.GET, entity_name='sql_function')
+
+
+class CreateTableWithSqlFunctionView(CreateAPIView):
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    queryset = SqlFunction.objects.all()
+    serializer_class = SwaggerSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            sql_function_id = kwargs.get('sql_function_id')
+            table_name = kwargs.get('table_name')
+            sql_function = self.get_queryset().get(id=sql_function_id)
+            connection = sql_function.connection
+            provider = connection.provider
+            if provider == MONGO:
+                mongo_db_manager = MongoDBManager()
+                db, cache_db = mongo_db_manager.connection_mongo_by_provider(
+                    provider_connection=connection)
+                collection = mongo_db_manager.create_new_collection(db=db, collection_name=table_name)
+                mongo_db_manager.create_table_with_sql_function(db, collection, sql_function)
+            else:
+                return responses.ok(data=None, method=constant.POST, entity_name=sql_function)
+        except Exception as err:
+            return responses.bad_request(data=str(err), message_code='SQL_FUNCTION_ERROR')
