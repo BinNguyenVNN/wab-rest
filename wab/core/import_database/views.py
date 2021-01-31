@@ -67,7 +67,7 @@ class ImportCsvView(CreateAPIView):
                 file_full_name = file_obj.name.split(".")
                 time_stamp = datetime.datetime.now().timestamp()
                 file_name = f"{file_full_name[0]}_{str(int(time_stamp))}.{file_full_name[1]}"
-
+                file_name = file_name.replace(" ", "_")
                 fs = FileSystemStorage(location=f"{settings.MEDIA_ROOT}/import",
                                        base_url=f"{settings.MEDIA_ROOT}/import")
                 filename = fs.save(file_name, file_obj)
@@ -79,7 +79,7 @@ class ImportCsvView(CreateAPIView):
                     provider_connection_id=connection.id,
                     username=user.username,
                     table=table_name,
-                    file_url=static_dir.replace(" ", "_")
+                    file_url=static_dir
                 )
                 process_import_database.delay(import_id=import_record.id)
                 return responses.ok(data="waiting import data", method='post', entity_name='import_database')
