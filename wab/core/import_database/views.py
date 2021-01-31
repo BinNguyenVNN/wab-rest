@@ -14,7 +14,7 @@ from wab.core.serializers import SwaggerSerializer
 from wab.utils import responses
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
-from .tasks import process_import_database
+# from .tasks import process_import_database
 
 
 class ImportCsvView(CreateAPIView):
@@ -81,7 +81,7 @@ class ImportCsvView(CreateAPIView):
                     table=table_name,
                     file_url=static_dir
                 )
-                process_import_database.delay(import_id=import_record.id)
+                # process_import_database.delay(import_id=import_record.id)
                 return responses.ok(data="waiting import data", method='post', entity_name='import_database')
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
 

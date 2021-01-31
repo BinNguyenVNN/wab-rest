@@ -1,6 +1,5 @@
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from wab.utils.jsonb import JSONField
+
 from wab.core.db_provider.models import DBProviderConnection
 
 
