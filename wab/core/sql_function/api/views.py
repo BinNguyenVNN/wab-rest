@@ -121,9 +121,7 @@ class SqlFunctionUpdateView(UpdateAPIView):
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
                 # Update SqlFunction
-                sql_function = self.get_queryset().get(
-                    id=sql_function_id
-                )
+                sql_function = self.get_queryset().get(id=sql_function_id)
                 sql_function.name = name
                 sql_function.connection = DBProviderConnection.objects.get(id=connection)
                 sql_function.save()
@@ -161,12 +159,12 @@ class SqlFunctionUpdateView(UpdateAPIView):
                 if sql_function_condition_items_create is not None:
                     for item in sql_function_condition_items_create:
                         SqlFunctionConditionItems.objects.create(
-                            table_name=sql_function_condition_item.get('table_name'),
-                            field_name=sql_function_condition_item.get('field_name'),
+                            table_name=item.get('table_name'),
+                            field_name=item.get('field_name'),
                             sql_function=sql_function,
-                            value=sql_function_condition_item.get('value'),
-                            operator=sql_function_condition_item.get('operator'),
-                            relation=sql_function_condition_item.get('relation')
+                            value=item.get('value'),
+                            operator=item.get('operator'),
+                            relation=item.get('relation')
                         )
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
