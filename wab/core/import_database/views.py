@@ -6,21 +6,19 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from rest_framework.generics import CreateAPIView
 from rest_framework.parsers import FileUploadParser
-from rest_framework.permissions import AllowAny
 
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.import_database.models import ImportData
 from wab.core.serializers import SwaggerSerializer
-from wab.utils import responses
+from wab.utils import responses, token_authentication
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
-# from .tasks import process_import_database
 
 
 class ImportCsvView(CreateAPIView):
-    authentication_classes = []
-    permission_classes = [AllowAny, ]
-    # authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
+    # authentication_classes = []
+    # permission_classes = [AllowAny, ]
+    authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
     serializer_class = SwaggerSerializer
     parser_class = (FileUploadParser,)
 
