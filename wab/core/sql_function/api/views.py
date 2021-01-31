@@ -222,7 +222,7 @@ class PreviewSqlFunctionView(ListAPIView):
                 result = json.loads(dumps(data))
                 final_data = {
                     'columns': columns,
-                    'collections':result
+                    'collections': result
                 }
                 return responses.paging_data(data=final_data, total_count=page_size, method=constant.GET,
                                              entity_name='db_provider_connection')

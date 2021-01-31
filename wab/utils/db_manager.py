@@ -522,39 +522,132 @@ class MongoDBManager(object):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
-
-        pipeline = [
-            {"$skip": page},
-            {"$limit": page_size},
-            {
-                "$lookup": {
-                    "from": table_2,
-                    "localField": field_1,
-                    "foreignField": field_2,
-                    "as": "data"
+        if len(list_match_and) > 0 and len(list_match_or) > 0:
+            pipeline = [
+                {"$skip": page},
+                {"$limit": page_size},
+                {
+                    "$lookup": {
+                        "from": table_2,
+                        "localField": field_1,
+                        "foreignField": field_2,
+                        "as": "data"
+                    },
                 },
-            },
-            {
-                "$unwind":
-                    {
-                        "path": "$data",
-                        "preserveNullAndEmptyArrays": False
+                {
+                    "$unwind":
+                        {
+                            "path": "$data",
+                            "preserveNullAndEmptyArrays": False
+                        }
+                },
+                {
+                    "$match": {
+                        "$and": list_match_and,
+                        "$or": list_match_or
                     }
-            },
-            {
-                "$match": {
-                    "$and": list_match_and,
-                    "$or": list_match_or
+                },
+                {"$sort": {order_by: -1}},
+                {
+                    "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                },
+                {
+                    "$project": {"data": 0, "_id": 0}
                 }
-            },
-            {"$sort": {order_by: -1}},
-            {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
-            },
-            {
-                "$project": {"data": 0, "_id": 0}
-            }
-        ]
+            ]
+        else:
+            if len(list_match_and) > 0:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    {
+                        "$unwind":
+                            {
+                                "path": "$data",
+                                "preserveNullAndEmptyArrays": False
+                            }
+                    },
+                    {
+                        "$match": {
+                            "$and": list_match_and
+                        }
+                    },
+                    {"$sort": {order_by: -1}},
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
+            elif len(list_match_or) > 0:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    {
+                        "$unwind":
+                            {
+                                "path": "$data",
+                                "preserveNullAndEmptyArrays": False
+                            }
+                    },
+                    {
+                        "$match": {
+                            "$or": list_match_or
+                        }
+                    },
+                    {"$sort": {order_by: -1}},
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
+            else:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    {
+                        "$unwind":
+                            {
+                                "path": "$data",
+                                "preserveNullAndEmptyArrays": False
+                            }
+                    },
+                    {"$sort": {order_by: -1}},
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
+
         return collection.aggregate(pipeline)
 
     def right_outer_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
