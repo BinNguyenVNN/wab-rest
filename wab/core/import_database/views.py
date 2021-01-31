@@ -11,9 +11,10 @@ from rest_framework.permissions import AllowAny
 from wab.core.db_provider.models import DBProviderConnection
 from wab.core.import_database.models import ImportData
 from wab.core.serializers import SwaggerSerializer
-from wab.utils import token_authentication, responses
+from wab.utils import responses
 from wab.utils.constant import MONGO
 from wab.utils.db_manager import MongoDBManager
+from .tasks import process_import_database
 
 
 class ImportCsvView(CreateAPIView):
@@ -23,7 +24,7 @@ class ImportCsvView(CreateAPIView):
     serializer_class = SwaggerSerializer
     parser_class = (FileUploadParser,)
 
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             user = request.user
             file_obj = request.FILES['file']
@@ -74,13 +75,13 @@ class ImportCsvView(CreateAPIView):
 
                 static_dir = f"{settings.MEDIA_ROOT}/import/{filename}"
 
-                ImportData.objects.create(
+                import_record = ImportData.objects.create(
                     provider_connection_id=connection.id,
                     username=user.username,
                     table=table_name,
-                    file_url=static_dir
+                    file_url=static_dir.replace(" ", "_")
                 )
-
+                process_import_database.delay(import_id=import_record.id)
                 return responses.ok(data="waiting import data", method='post', entity_name='import_database')
             return responses.bad_request(data=None, message_code="SQL_PROVIDER_NOT_FOUND")
 
