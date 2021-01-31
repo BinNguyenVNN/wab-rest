@@ -27,6 +27,10 @@ class MergeType(Enum):
     union = ('union', 'union')
 
     @classmethod
+    def get_name(cls, member):
+        return cls[member].value[1]
+
+    @classmethod
     def get_value(cls, member):
         return cls[member].value[0]
 

@@ -387,36 +387,120 @@ class MongoDBManager(object):
                     list_match_and.append(item)
                 else:
                     list_match_or.append(item)
-
-        pipeline = [
-            {"$skip": page},
-            {"$limit": page_size},
-            {
-                "$lookup": {
-                    "from": table_2,
-                    "localField": field_1,
-                    "foreignField": field_2,
-                    "as": "data"
+        pipeline = []
+        if len(list_match_and) > 0 and len(list_match_or) > 0:
+            pipeline = [
+                {"$skip": page},
+                {"$limit": page_size},
+                {
+                    "$lookup": {
+                        "from": table_2,
+                        "localField": field_1,
+                        "foreignField": field_2,
+                        "as": "data"
+                    },
                 },
-            },
-            # {"$unwind": "$data"},
-            {
-                "$match": {
-                    "$and": list_match_and,
-                    "$or": list_match_or
+                # {"$unwind": "$data"},
+                {
+                    "$match": {
+                        "$and": list_match_and,
+                        "$or": list_match_or
+                    }
+                },
+                {"$sort": {order_by: -1}},
+                # {
+                #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                # },
+                {
+                    "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                },
+                {
+                    "$project": {"data": 0, "_id": 0}
                 }
-            },
-            {"$sort": {order_by: -1}},
-            # {
-            #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
-            # },
-            {
-                "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
-            },
-            {
-                "$project": {"data": 0, "_id": 0}
-            }
-        ]
+            ]
+        else:
+            if len(list_match_and) > 0:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    # {"$unwind": "$data"},
+                    {
+                        "$match": {
+                            "$and": list_match_and
+                        }
+                    },
+                    {"$sort": {order_by: -1}},
+                    # {
+                    #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    # },
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
+            elif len(list_match_or) > 0:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    # {"$unwind": "$data"},
+                    {
+                        "$match": {
+                            "$or": list_match_or
+                        }
+                    },
+                    {"$sort": {order_by: -1}},
+                    # {
+                    #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    # },
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
+            else:
+                pipeline = [
+                    {"$skip": page},
+                    {"$limit": page_size},
+                    {
+                        "$lookup": {
+                            "from": table_2,
+                            "localField": field_1,
+                            "foreignField": field_2,
+                            "as": "data"
+                        },
+                    },
+                    # {"$unwind": "$data"},
+                    {"$sort": {order_by: -1}},
+                    # {
+                    #     "$replaceRoot": {"newRoot": {"$mergeObjects": ["$data", "$$ROOT"]}}
+                    # },
+                    {
+                        "$replaceRoot": {"newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$data", 0]}, "$$ROOT"]}}
+                    },
+                    {
+                        "$project": {"data": 0, "_id": 0}
+                    }
+                ]
         return collection.aggregate(pipeline)
 
     def inner_join(self, db, table_1, field_1, table_2, field_2, order_by, condition_items, page, page_size):
@@ -497,27 +581,27 @@ class MongoDBManager(object):
                 table_name_second = merge_after.table_name
                 column_name_second = merge_after.column_name
                 break
-            if merge_type == MergeType.left_join:
+            if merge_type == MergeType.left_join.get_name(member='left_join'):
                 return self.left_right_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                             table_2=table_name_second, field_2=column_name_second,
                                             order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
-            elif merge_type == MergeType.right_join:
+            elif merge_type == MergeType.right_join.get_name(member='right_join'):
                 return self.left_right_join(db=db, table_1=table_name_second, field_1=column_name_second,
                                             table_2=table_name_first, field_2=column_name_first,
                                             order_by=order_by, condition_items=condition_items,
                                             page=page, page_size=page_size)
-            elif merge_type == MergeType.inner_join:
+            elif merge_type == MergeType.inner_join.get_name(member='inner_join'):
                 return self.inner_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                        table_2=table_name_second, field_2=column_name_second,
                                        order_by=order_by, condition_items=condition_items,
                                        page=page, page_size=page_size)
-            elif merge_type == MergeType.union:
+            elif merge_type == MergeType.union.get_name(member='union'):
                 return self.union(db=db, table_1=table_name_first, field_1=column_name_first,
                                   table_2=table_name_second, field_2=column_name_second,
                                   order_by=order_by, condition_items=condition_items,
                                   page=page, page_size=page_size)
-            elif merge_type == MergeType.right_outer_join:
+            elif merge_type == MergeType.right_outer_join.get_name(member='right_outer_join'):
                 return self.right_outer_join(db=db, table_1=table_name_first, field_1=column_name_first,
                                              table_2=table_name_second, field_2=column_name_second,
                                              order_by=order_by, condition_items=condition_items,

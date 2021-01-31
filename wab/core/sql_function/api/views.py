@@ -210,15 +210,21 @@ class PreviewSqlFunctionView(ListAPIView):
             mongo_db_manager = MongoDBManager()
             sql_function = SqlFunction.objects.get(id=sql_function_id)
             connection = sql_function.connection
-            if connection.name == MONGO:
+            if connection.provider.name == MONGO:
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                     provider_connection=connection)
-                documents, count = mongo_db_manager.sql_function_exe(sql_function=sql_function, db=db, page=page,
-                                                                     page_size=page_size)
+                documents = mongo_db_manager.sql_function_exe(sql_function=sql_function, db=db, page=page,
+                                                              page_size=page_size)
 
                 data = list(documents)
+                first_record = data[0]
+                columns = first_record.keys()
                 result = json.loads(dumps(data))
-                return responses.paging_data(data=result, total_count=count, method=constant.GET,
+                final_data = {
+                    'columns': columns,
+                    'collections':result
+                }
+                return responses.paging_data(data=final_data, total_count=page_size, method=constant.GET,
                                              entity_name='db_provider_connection')
             else:
                 return responses.ok(data=None, method=constant.GET, entity_name='sql_function')
