@@ -7,7 +7,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from wab.core.custom_column.api.serializers import CustomColumnTypeSerializer, \
     CustomColumnConfigValidationSerializer, \
-    CustomColumnTypeValidatorSerializer, UpdateCustomColumnTypeSerializer, CreateCustomColumnMappingSerializer, \
+    CustomColumnTypeValidatorSerializer, CreateCustomColumnMappingSerializer, \
     CreateCustomColumnTypeSerializer
 from wab.core.custom_column.models import CustomColumnType, \
     CustomColumnConfigValidation, CustomColumnTypeValidator, CustomColumnMapping
@@ -114,61 +114,63 @@ class CreateCustomColumnTypeView(CreateAPIView):
 
 class UpdateCustomColumnTypeView(UpdateAPIView):
     authentication_classes = [token_authentication.JWTAuthenticationBackend, ]
-    serializer_class = UpdateCustomColumnTypeSerializer
+    serializer_class = CustomColumnTypeSerializer
 
     @transaction.atomic()
     def put(self, request, *args, **kwargs):
         data = request.data
         custom_column_type_id = kwargs.get("custom_column_type_id")
         name = data.get("name")
+        slug = data.get('slug')
         custom_column_type_validator_delete_list = data.get("custom_column_type_validator_delete_list")
         custom_column_type_validator_update_list = data.get("custom_column_type_validator_update_list")
         custom_column_type_validator_create_list = data.get("custom_column_type_validator_create_list")
         del data['custom_column_type_validator_delete_list']
         del data['custom_column_type_validator_update_list']
         del data['custom_column_type_validator_create_list']
-        serializer = self.get_serializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            try:
-                # Update Custom_Column_Config_Type
-                custom_column_type = CustomColumnType.objects.get(id=custom_column_type_id)
-                custom_column_type.name = name
-                custom_column_type.save()
+        # serializer = self.get_serializer(data=data)
+        # if serializer.is_valid(raise_exception=True):
+        try:
+            # Update Custom_Column_Config_Type
+            custom_column_type = CustomColumnType.objects.get(id=custom_column_type_id)
+            custom_column_type.slug = slug
+            custom_column_type.name = name
+            custom_column_type.save()
 
-                # Delete List Custom_Column_Config_Type_Validator
-                if custom_column_type_validator_delete_list is not None:
-                    CustomColumnTypeValidator.objects.filter(id__in=custom_column_type_validator_delete_list).delete()
+            # Delete List Custom_Column_Config_Type_Validator
+            if custom_column_type_validator_delete_list is not None:
+                CustomColumnTypeValidator.objects.filter(id__in=custom_column_type_validator_delete_list).delete()
 
-                # Update List Custom_Column_Config_Type_Validator
-                if custom_column_type_validator_update_list is not None:
-                    for updated_item in custom_column_type_validator_update_list:
-                        updated_validator_id = updated_item.get("id")
-                        updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
-                        custom_column_config_validation = CustomColumnConfigValidation.objects.get(
-                            id=updated_item.get('custom_column_config_validation'))
-                        updated_validator.custom_column_config_validation = custom_column_config_validation
-                        updated_validator.operator = updated_item.get("operator")
-                        updated_validator.value = updated_item.get("value")
-                        updated_validator.save()
+            # Update List Custom_Column_Config_Type_Validator
+            if custom_column_type_validator_update_list is not None:
+                for updated_item in custom_column_type_validator_update_list:
+                    updated_validator_id = updated_item.get("id")
+                    updated_validator = CustomColumnTypeValidator.objects.get(id=updated_validator_id)
+                    custom_column_config_validation = CustomColumnConfigValidation.objects.get(
+                        id=updated_item.get('custom_column_config_validation'))
+                    updated_validator.custom_column_config_validation = custom_column_config_validation
+                    updated_validator.operator = updated_item.get("operator")
+                    updated_validator.value = updated_item.get("value")
+                    updated_validator.save()
 
-                # Create List Custom_Column_Config_Type_Validator
-                if custom_column_type_validator_create_list is not None:
-                    for validation_item in custom_column_type_validator_create_list:
-                        CustomColumnTypeValidator.objects.create(
-                            custom_column_type=custom_column_type,
-                            custom_column_config_validation_id=validation_item.get('custom_column_config_validation'),
-                            operator=validation_item.get('operator'),
-                            value=validation_item.get("value")
-                        )
+            # Create List Custom_Column_Config_Type_Validator
+            if custom_column_type_validator_create_list is not None:
+                for validation_item in custom_column_type_validator_create_list:
+                    CustomColumnTypeValidator.objects.create(
+                        custom_column_type=custom_column_type,
+                        custom_column_config_validation_id=validation_item.get('custom_column_config_validation'),
+                        operator=validation_item.get('operator'),
+                        value=validation_item.get("value")
+                    )
 
-                serializer_config_type = self.get_serializer(custom_column_type)
-                return responses.ok(data=serializer_config_type.data, method=constant.POST,
-                                    entity_name='custom-column-type')
-            except Exception as err:
-                return responses.bad_request(data=str(err),
-                                             message_code='UPDATE_CUSTOM_COLUMN_TYPE_HAS_ERROR')
-        else:
-            return responses.bad_request(data=None, message_code='UPDATE_CUSTOM_COLUMN_TYPE_INVALID')
+            serializer_config_type = self.get_serializer(custom_column_type)
+            return responses.ok(data=serializer_config_type.data, method=constant.POST,
+                                entity_name='custom-column-type')
+        except Exception as err:
+            return responses.bad_request(data=str(err),
+                                         message_code='UPDATE_CUSTOM_COLUMN_TYPE_HAS_ERROR')
+    # else:
+    #     return responses.bad_request(data=None, message_code='UPDATE_CUSTOM_COLUMN_TYPE_INVALID')
 
 
 class CreateCustomColumnMappingView(CreateAPIView):

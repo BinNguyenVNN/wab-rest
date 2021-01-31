@@ -114,7 +114,9 @@ class SqlFunctionUpdateView(UpdateAPIView):
         sql_function_order_by_id = data.get('sql_function_order_by_id')
         order_by_name = data.get('order_by_name')
         sql_function_merges = data.get('sql_function_merges')
-        sql_function_condition_items = data.get('sql_function_condition_items')
+        sql_function_condition_items_delete = data.get('sql_function_condition_items_delete')
+        sql_function_condition_items_update = data.get('sql_function_condition_items_update')
+        sql_function_condition_items_create = data.get('sql_function_condition_items_create')
         serializer_sql_function = self.get_serializer(data=data)
         if serializer_sql_function.is_valid(raise_exception=True):
             try:
@@ -139,12 +141,14 @@ class SqlFunctionUpdateView(UpdateAPIView):
                         sql_function_merge = SqlFunctionMerge.objects.get(id=item.get('id'))
                         sql_function_merge.table_name = item.get('table_name')
                         sql_function_merge.merge_type = item.get('merge_type')
-                        sql_function_merge.column_name = item.get('column_name'),
+                        sql_function_merge.column_name = item.get('column_name')
                         sql_function_merge.save()
-
+                # Delete SqlFunctionConditionItems
+                if sql_function_condition_items_delete is not None:
+                    SqlFunctionConditionItems.objects.filter(id__in=sql_function_condition_items_delete).delete()
                 # Update SqlFunctionConditionItems
-                if sql_function_condition_items is not None:
-                    for item in sql_function_condition_items:
+                if sql_function_condition_items_update is not None:
+                    for item in sql_function_condition_items_update:
                         sql_function_condition_item = SqlFunctionConditionItems.objects.get(
                             id=item.get('id'))
                         sql_function_condition_item.table_name = item.get('table_name')
@@ -153,6 +157,17 @@ class SqlFunctionUpdateView(UpdateAPIView):
                         sql_function_condition_item.operator = item.get('operator')
                         sql_function_condition_item.relation = item.get('relation')
                         sql_function_condition_item.save()
+                # Create SqlFunctionConditionItems
+                if sql_function_condition_items_create is not None:
+                    for item in sql_function_condition_items_create:
+                        SqlFunctionConditionItems.objects.create(
+                            table_name=sql_function_condition_item.get('table_name'),
+                            field_name=sql_function_condition_item.get('field_name'),
+                            sql_function=sql_function,
+                            value=sql_function_condition_item.get('value'),
+                            operator=sql_function_condition_item.get('operator'),
+                            relation=sql_function_condition_item.get('relation')
+                        )
                 return responses.ok(data=serializer_sql_function.data, method=constant.PUT, entity_name='sql-function')
             except Exception as err:
                 return responses.bad_request(data=str(err), message_code='UPDATE_SQL_FUNCTION_HAS_ERROR')
@@ -353,7 +368,7 @@ class CreateTableWithSqlFunctionView(CreateAPIView):
             sql_function = self.get_queryset().get(id=sql_function_id)
             connection = sql_function.connection
             provider = connection.provider
-            if provider == MONGO:
+            if provider.name == MONGO:
                 mongo_db_manager = MongoDBManager()
                 db, cache_db = mongo_db_manager.connection_mongo_by_provider(
                     provider_connection=connection)

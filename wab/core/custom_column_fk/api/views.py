@@ -106,9 +106,7 @@ class CustomColumnFKUpdateView(UpdateAPIView):
         if serializer_custom_column_fk.is_valid(raise_exception=True):
             try:
                 # Update Custom_Column_FK
-                custom_column_fk = self.get_queryset().get(
-                    id=custom_column_fk_id
-                )
+                custom_column_fk = self.get_queryset().get(id=custom_column_fk_id)
                 custom_column_fk.name = name
                 custom_column_fk.table_name = table_name
                 custom_column_fk.connection = DBProviderConnection.objects.get(id=connection_id)
@@ -118,18 +116,16 @@ class CustomColumnFKUpdateView(UpdateAPIView):
 
                 # Delete custom_column_fk_filter_list
                 if custom_column_fk_filter_delete_list is not None:
-                    for item in custom_column_fk_filter_delete_list:
-                        custom_column_fk_filter = CustomColumnFKFilter.objects.get(id=item)
-                        custom_column_fk_filter.delete()
+                    CustomColumnFKFilter.objects.get(id__in=custom_column_fk_filter_delete_list).delete()
 
                 # Update custom_column_fk_filter_list
                 if custom_column_fk_filter_update_list is not None:
                     for item in custom_column_fk_filter_update_list:
                         custom_column_fk_filter = CustomColumnFKFilter.objects.get(
-                            id=item.get('custom_column_fk_filter_id'))
+                            id=item.get('id'))
                         custom_column_fk_filter.field_name = item.get('field_name')
                         custom_column_fk_filter.operator = item.get('operator')
-                        custom_column_fk_filter.value = item.get('value'),
+                        custom_column_fk_filter.value = item.get('value')
                         custom_column_fk_filter.save()
 
                 # Create Custom_Column_Filter

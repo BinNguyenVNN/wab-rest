@@ -22,6 +22,6 @@ urlpatterns = [
                   path('preview/<int:pk>/', PreviewSqlFunctionView.as_view(),
                        name='PreviewSqlFunctionView'),
                   path('create-table/<str:table_name>/<int:sql_function_id>/', CreateTableWithSqlFunctionView.as_view(),
-                       name='SharingFilesGetDataView'),
+                       name='CreateTableWithSqlFunctionView'),
 
               ] + router.urls
