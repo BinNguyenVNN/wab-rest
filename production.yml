@@ -4,6 +4,8 @@ volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
   production_traefik: {}
+  static-content-import: {}
+  static-content-export: {}
 #  pgadmin: {}
 
 #networks:
@@ -19,6 +21,9 @@ services:
     depends_on:
       - postgres
       - redis
+    volumes:
+      - static-content-import:/app/wab/media/import
+      - static-content-export:/app/wab/media/export
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
@@ -65,18 +70,24 @@ services:
       - "0.0.0.0:443:443"
       - "0.0.0.0:5555:5555"
       - "0.0.0.0:5432:5432"
- 
+
   redis:
     image: redis:5.0
 
   celeryworker:
     <<: *django
     image: wab_production_celeryworker
+    volumes:
+      - static-content-import:/app/wab/media/import
+      - static-content-export:/app/wab/media/export
     command: /start-celeryworker
 
   celerybeat:
     <<: *django
     image: wab_production_celerybeat
+    volumes:
+      - static-content-import:/app/wab/media/import
+      - static-content-export:/app/wab/media/export
     command: /start-celerybeat
 
   flower:
