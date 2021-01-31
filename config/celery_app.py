@@ -5,7 +5,7 @@ from django.conf import settings
 from datetime import timedelta
 
 # set the default Django settings module for the 'celery' program.
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
 app = Celery("wab", include=["wab.core.notifications.tasks", "wab.core.import_database.tasks",
                              "wab.core.custom_column.tasks", "wab.core.export_database.tasks"])
